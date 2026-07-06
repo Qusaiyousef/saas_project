@@ -1,0 +1,35 @@
+name: Build Windows App
+
+on:
+  workflow_dispatch: # هذا الخيار ممتاز لأنه يسمح لك بتشغيل البناء يدوياً متى أردت بضغطة زر
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+
+    - name: Enable Windows Desktop
+      run: flutter config --enable-windows-desktop
+
+    - name: Install dependencies
+      working-directory: ./saas_frontend
+      run: flutter pub get
+
+    - name: Build Windows
+      working-directory: ./saas_frontend
+      run: flutter build windows
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-app-exe
+        # هذا هو المسار الافتراضي الذي تخرج فيه ملفات الويندوز بعد البناء
+        path: saas_frontend/build/windows/x64/runner/Release/
