@@ -44,10 +44,15 @@ dependencies:
   fl_chart: ^1.2.0
   jwt_decoder: ^2.0.1
   shared_preferences: ^2.3.2
+  google_fonts: ^8.1.0
+  printing: ^5.15.0
+  pdf: ^3.13.0
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -66,6 +71,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/images/logo.png
+    - assets/app_icon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -97,3 +106,21 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/app_icon.png"
+  web:
+    generate: true
+    image_path: "assets/app_icon.png"
+    background_color: "#ffffff"
+    theme_color: "#ffffff"
+  windows:
+    generate: true
+    image_path: "assets/app_icon.png"
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: "assets/app_icon.png"
+  min_sdk_android: 21

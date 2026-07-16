@@ -44,11 +44,20 @@ public class FinanceController : ControllerBase
                 .Where(s => s.TenantId == tenantId.Value)
                 .SumAsync(s => s.AmountPaid);
 
+            var bookingsCash = await _context.TimeBookings
+                .Where(b => b.TenantId == tenantId.Value && b.PaymentMethod == "Cash")
+                .SumAsync(b => b.AmountPaid);
+
+            var subsCash = await _context.Subscriptions
+                .Where(s => s.TenantId == tenantId.Value && s.PaymentMethod == "Cash")
+                .SumAsync(s => s.AmountPaid);
+
             return new
             {
                 totalRevenue = bookingsTotal + subsTotal,
                 bookingsRevenue = bookingsTotal,
-                subscriptionsRevenue = subsTotal
+                subscriptionsRevenue = subsTotal,
+                totalCash = bookingsCash + subsCash
             };
         });
 
@@ -76,7 +85,8 @@ public class FinanceController : ControllerBase
                     CustomerName = b.CustomerName,
                     Type = "Booking",
                     Description = b.IsFullDayBlock ? "Full Day Booking" : "Hourly Booking",
-                    Amount = b.AmountPaid
+                    Amount = b.AmountPaid,
+                    Method = b.PaymentMethod
                 })
                 .AsNoTracking()
                 .ToListAsync();
@@ -90,7 +100,8 @@ public class FinanceController : ControllerBase
                     CustomerName = s.CustomerName,
                     Type = "Subscription",
                     Description = "Membership Plan",
-                    Amount = s.AmountPaid
+                    Amount = s.AmountPaid,
+                    Method = s.PaymentMethod
                 })
                 .AsNoTracking()
                 .ToListAsync();

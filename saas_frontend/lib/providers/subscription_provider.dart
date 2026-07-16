@@ -19,7 +19,7 @@ class SubscriptionNotifier extends AsyncNotifier<List<dynamic>> {
     }
   }
 
-  Future<void> addSubscription(String customerName, String? customerId, int months, double totalAmount, double amountPaid) async {
+  Future<void> addSubscription(String customerName, String? customerId, int months, double totalAmount, double amountPaid, String paymentMethod) async {
     final resource = await ref.read(defaultResourceProvider.future);
     if (resource == null) throw Exception('No resource found');
 
@@ -37,6 +37,7 @@ class SubscriptionNotifier extends AsyncNotifier<List<dynamic>> {
       'status': 0,
       'totalAmount': totalAmount,
       'amountPaid': amountPaid,
+      'paymentMethod': paymentMethod,
     });
 
     ref.invalidateSelf();

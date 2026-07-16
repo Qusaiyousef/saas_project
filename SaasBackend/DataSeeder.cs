@@ -15,6 +15,9 @@ public static class DataSeeder
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+        // Run migrations to create database schema automatically
+        await context.Database.MigrateAsync();
+
         // Seed Roles
         if (!await roleManager.RoleExistsAsync("Admin"))
             await roleManager.CreateAsync(new IdentityRole("Admin"));

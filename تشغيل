@@ -1,0 +1,29 @@
+
+   flutter pub get
+
+
+Date :
+user  sa
+pass  Qusai2026Db
+
+
+
+
+
+
+(kali㉿kali)-[~/…/saas_project/saas_frontend/build/web]
+└─$ python -m  http.server  8080
+Serving HTTP on 0.0.0.0 port 8080 (http://0.0.0.0:8080/) ...
+127.0.0.1 - - [06/Jul/2026 16:20:12] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 16:20:12] "GET /flutter_bootstrap.js HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 16:20:14] "GET /main.dart.js HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 16:20:14] "GET /icons/Icon-192.png HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 16:20:14] "GET /favicon.png HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 16:20:14] "GET /assets/FontManifest.json HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 16:20:14] "GET /assets/packages/cupertino_icons/assets/CupertinoIcons.ttf HTTP/1.1" 200 -
+127.0.0.1 - - [06/Jul/2026 16:20:14] "GET /assets/fonts/MaterialIcons-Regular.otf HTTP/1.1" 200 
+
+
+
+
+طيب لدي  اقتراح   سوف اشرح لك شي النظام الان يعمل وفي المبيايل ايضا . لكن التصميم في الوندوز او الويب جيد  لكن لو اردنا تصميم جيد واستخدام مريح كا تطبيق مبايل  بصراحه غير جيد الان وانت تعلم انه ليس جيد . لذالك نريد تحسينه  في حاله استخدام المبايل فقط  لذالك استخدم افضل ال skills  لدينا لتعمل على تصميمه وتطويره. مارئيك بالاقتراح ؟

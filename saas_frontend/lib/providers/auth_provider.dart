@@ -46,7 +46,7 @@ class AuthState {
 }
 
 class AuthNotifier extends Notifier<AuthState> {
-  final Dio _dio = Dio(BaseOptions(baseUrl: 'http://localhost:5286/api')); // Update port if needed
+  final Dio _dio = Dio(BaseOptions(baseUrl: 'http://qusaiali-001-site1.ktempurl.com/api')); // Update port if needed
 
   @override
   AuthState build() {
@@ -99,7 +99,7 @@ class AuthNotifier extends Notifier<AuthState> {
       final authState = state;
       if (authState.token == null) return;
       
-      final dio = Dio(BaseOptions(baseUrl: 'http://localhost:5286/api'));
+      final dio = Dio(BaseOptions(baseUrl: 'http://qusaiali-001-site1.ktempurl.com/api'));
       dio.interceptors.add(InterceptorsWrapper(
         onRequest: (options, handler) {
           options.headers['Authorization'] = 'Bearer ${authState.token}';
@@ -184,7 +184,7 @@ final authProvider = NotifierProvider<AuthNotifier, AuthState>(() {
 // Provide a global Dio instance that injects the JWT token
 final dioProvider = Provider<Dio>((ref) {
   final authState = ref.watch(authProvider);
-  final dio = Dio(BaseOptions(baseUrl: 'http://localhost:5286/api'));
+  final dio = Dio(BaseOptions(baseUrl: 'http://qusaiali-001-site1.ktempurl.com/api'));
   
   if (authState.token != null) {
     dio.interceptors.add(InterceptorsWrapper(

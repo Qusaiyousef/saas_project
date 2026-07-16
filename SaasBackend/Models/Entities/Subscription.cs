@@ -28,4 +28,7 @@ public class Subscription : ITenantEntity
     
     public decimal TotalAmount { get; set; }
     public decimal AmountPaid { get; set; }
+
+    [MaxLength(50)]
+    public string PaymentMethod { get; set; } = "Cash";
 }

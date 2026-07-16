@@ -37,6 +37,7 @@ class BookingsNotifier extends AsyncNotifier<List<dynamic>> {
     required bool isFullDay,
     required double totalAmount,
     required double amountPaid,
+    required String paymentMethod,
   }) async {
     final resource = await ref.read(defaultResourceProvider.future);
     if (resource == null) throw Exception('No resource found for this tenant.');
@@ -59,6 +60,7 @@ class BookingsNotifier extends AsyncNotifier<List<dynamic>> {
         'status': 0,
         'totalAmount': totalAmount,
         'amountPaid': amountPaid,
+        'paymentMethod': paymentMethod,
       });
       ref.invalidateSelf();
     } on DioException catch (e) {

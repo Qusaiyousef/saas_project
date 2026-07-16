@@ -1,3 +1,5 @@
+import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -8,270 +10,254 @@ import '../providers/subscription_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_strings.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  String _chartTimeframe = 'Weekly';
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final tenantType = authState.tenantType ?? TenantType.pool;
-    final hasSubscriptions = tenantType == TenantType.gym || tenantType == TenantType.pool;
     final isAr = ref.watch(isArabicProvider);
-    final s    = (String key) => AppStrings.t(key, isAr);
+    final s = (String key) => AppStrings.t(key, isAr);
 
     final bookingsAsync = ref.watch(bookingsProvider);
-    final subsAsync = hasSubscriptions ? ref.watch(subscriptionProvider) : null;
-    final resourceAsync = ref.watch(defaultResourceProvider);
+    final subsAsync =
+        (tenantType == TenantType.gym || tenantType == TenantType.pool)
+        ? ref.watch(subscriptionProvider)
+        : null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(s('dashTitle')),
-        elevation: 2,
-      ),
+      backgroundColor: Colors.transparent, // Background handled by ShellScreen
       body: bookingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Error loading bookings: $err')),
+        error: (err, _) => Center(child: Text('Error: $err')),
         data: (bookings) {
           final now = DateTime.now();
           final today = DateTime(now.year, now.month, now.day);
 
-          // Booking stats
-          final todayBookings = bookings.where((b) {
-            final dt = DateTime.parse(b['startTime']).toLocal();
-            return dt.year == today.year && dt.month == today.month && dt.day == today.day;
-          }).toList();
-          final totalBookings = bookings.length;
-          final todayCount = todayBookings.length;
-          final fullDayCount = bookings.where((b) => b['isFullDayBlock'] == true).length;
+          final List<Map<String, dynamic>> todayBookings = bookings
+              .where((b) {
+                final dt = DateTime.parse(b['startTime']).toLocal();
+                return dt.year == today.year &&
+                    dt.month == today.month &&
+                    dt.day == today.day;
+              })
+              .cast<Map<String, dynamic>>()
+              .toList();
 
-          // Weekly bar data (last 7 days)
-          final weeklyData = List.generate(7, (i) {
-            final day = today.subtract(Duration(days: 6 - i));
-            return bookings.where((b) {
+          final todayCount = todayBookings.length;
+          final totalRev = bookings.fold<double>(
+            0,
+            (sum, b) => sum + ((b['totalAmount'] as num?)?.toDouble() ?? 0),
+          );
+
+          // Calculate Occupancy (Percentage of days booked this month)
+          final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+          final bookedDaysThisMonth = bookings.where((b) {
+            final dt = DateTime.parse(b['startTime']).toLocal();
+            return dt.year == now.year && dt.month == now.month;
+          }).map((b) => DateTime.parse(b['startTime']).toLocal().day).toSet().length;
+          final occupancyRate = ((bookedDaysThisMonth / daysInMonth) * 100).toStringAsFixed(0) + '%';
+
+          // Calculate Dynamic Revenue based on _chartTimeframe
+          List<double> chartData = [];
+          List<String> chartLabels = [];
+          
+          if (_chartTimeframe == 'Weekly') {
+            chartData = List.filled(7, 0.0);
+            chartLabels = const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            final int daysSinceMonday = now.weekday - 1;
+            final startOfWeek = DateTime(now.year, now.month, now.day).subtract(Duration(days: daysSinceMonday));
+            
+            for (final b in bookings) {
               final dt = DateTime.parse(b['startTime']).toLocal();
-              return dt.year == day.year && dt.month == day.month && dt.day == day.day;
-            }).length.toDouble();
-          });
-          final dayLabels = List.generate(7, (i) {
-            final day = today.subtract(Duration(days: 6 - i));
-            final d = isAr
-                ? ['إث', 'ثل', 'أر', 'خم', 'جم', 'سب', 'أح']
-                : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            return d[day.weekday - 1];
-          });
+              if (!dt.isBefore(startOfWeek) && dt.isBefore(startOfWeek.add(const Duration(days: 7)))) {
+                final dayIndex = dt.weekday - 1;
+                chartData[dayIndex] += ((b['totalAmount'] as num?)?.toDouble() ?? 0.0);
+              }
+            }
+          } else if (_chartTimeframe == 'Monthly') {
+            chartData = List.filled(4, 0.0);
+            chartLabels = const ['W1', 'W2', 'W3', 'W4'];
+            final startOfMonth = DateTime(now.year, now.month, 1);
+            final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+            
+            for (final b in bookings) {
+              final dt = DateTime.parse(b['startTime']).toLocal();
+              if (!dt.isBefore(startOfMonth) && !dt.isAfter(endOfMonth)) {
+                int weekIndex = (dt.day - 1) ~/ 7;
+                if (weekIndex > 3) weekIndex = 3;
+                chartData[weekIndex] += ((b['totalAmount'] as num?)?.toDouble() ?? 0.0);
+              }
+            }
+          } else if (_chartTimeframe == 'Yearly') {
+            chartData = List.filled(12, 0.0);
+            chartLabels = const ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            for (final b in bookings) {
+              final dt = DateTime.parse(b['startTime']).toLocal();
+              if (dt.year == now.year) {
+                final monthIndex = dt.month - 1;
+                chartData[monthIndex] += ((b['totalAmount'] as num?)?.toDouble() ?? 0.0);
+              }
+            }
+          }
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── KPI Row ──
-                resourceAsync.when(
-                  data: (resource) {
-                    return Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1600),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Greeting
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _kpiCard(context, s('dashTotalBookings'), '$totalBookings', Icons.book_online, Colors.blue),
-                        _kpiCard(context, s('dashTodayBookings'), '$todayCount', Icons.today, Colors.teal),
-                        _kpiCard(context, isAr ? 'حجوزات يوم كامل' : 'Full Day Blocks', '$fullDayCount', Icons.block, Colors.orange),
-                        if (hasSubscriptions)
-                          _subsKpiCard(context, subsAsync!, s),
-                        _kpiCard(context, isAr ? 'المورد' : 'Resource', resource?['name'] ?? 'N/A', Icons.business, Colors.purple),
+                        Text(
+                          '${AppStrings.t('dashWelcome', isAr)}${authState.role ?? "Admin"}',
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          AppStrings.t('dashSubtitle', isAr),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ],
-                    );
-                  },
-                  loading: () => const SizedBox(),
-                  error: (_, __) => const SizedBox(),
-                ),
-
-                const SizedBox(height: 28),
-
-                // ── Charts Row ──
-                LayoutBuilder(builder: (context, constraints) {
-                  final isDesktop = constraints.maxWidth > 800;
-                  return Flex(
-                    direction: isDesktop ? Axis.horizontal : Axis.vertical,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Bar Chart - weekly bookings
-                      Expanded(
-                        flex: isDesktop ? 2 : 0,
-                        child: _chartCard(
-                          context,
-                          isAr ? 'الحجوزات — آخر 7 أيام' : 'Bookings — Last 7 Days',
-                          SizedBox(
-                            height: 260,
-                            child: totalBookings == 0
-                                ? Center(child: Text(isAr ? 'لا توجد بيانات بعد' : 'No booking data yet', style: const TextStyle(color: Colors.grey)))
-                                : BarChart(BarChartData(
-                                    alignment: BarChartAlignment.spaceAround,
-                                    barGroups: List.generate(7, (i) => BarChartGroupData(
-                                      x: i,
-                                      barRods: [BarChartRodData(
-                                        toY: weeklyData[i],
-                                        color: Colors.blue,
-                                        width: 18,
-                                        borderRadius: BorderRadius.circular(4),
-                                      )],
-                                    )),
-                                    titlesData: FlTitlesData(
-                                      bottomTitles: AxisTitles(
-                                        sideTitles: SideTitles(
-                                          showTitles: true,
-                                          getTitlesWidget: (val, _) => Padding(
-                                            padding: const EdgeInsets.only(top: 6),
-                                            child: Text(dayLabels[val.toInt()], style: const TextStyle(fontSize: 11)),
-                                          ),
-                                        ),
-                                      ),
-                                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                    ),
-                                    borderData: FlBorderData(show: false),
-                                    gridData: const FlGridData(show: false),
-                                  )),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: isDesktop ? 24 : 0, height: isDesktop ? 0 : 24),
-                      // Pie Chart - booking types
-                      Expanded(
-                        flex: isDesktop ? 1 : 0,
-                        child: _chartCard(
-                          context,
-                          isAr ? 'أنواع الحجوزات' : 'Booking Types',
-                          SizedBox(
-                            height: 260,
-                            child: totalBookings == 0
-                                ? Center(child: Text(isAr ? 'لا توجد بيانات بعد' : 'No data yet', style: const TextStyle(color: Colors.grey)))
-                                : PieChart(PieChartData(
-                                    sections: [
-                                      PieChartSectionData(
-                                        color: Colors.blue,
-                                        value: (totalBookings - fullDayCount).toDouble().clamp(0, double.infinity),
-                                      title: '${isAr ? 'بالساعة' : 'Hourly'}\n${totalBookings - fullDayCount}',
-                                        radius: 65,
-                                        titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                                      ),
-                                      if (fullDayCount > 0)
-                                        PieChartSectionData(
-                                          color: Colors.orange,
-                                          value: fullDayCount.toDouble(),
-                                          title: '${isAr ? 'يوم كامل' : 'Full Day'}\n$fullDayCount',
-                                          radius: 65,
-                                          titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                                        ),
-                                    ],
-                                    centerSpaceRadius: 28,
-                                  )),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                }),
-
-                const SizedBox(height: 24),
-
-                // ── Subscriptions Section (Gym & Pool only) ──
-                if (hasSubscriptions)
-                  subsAsync!.when(
-                    loading: () => _chartCard(context, s('dashActiveSubs'),
-                        const Center(child: CircularProgressIndicator())),
-                    error: (e, _) => _chartCard(context, s('dashActiveSubs'),
-                        Text('Error: $e', style: const TextStyle(color: Colors.red))),
-                    data: (subs) => _chartCard(
-                      context,
-                      '${s('dashActiveSubs')} (${subs.length})',
-                      subs.isEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Center(child: Text(s('dashNoBookings'), style: const TextStyle(color: Colors.grey))),
-                            )
-                          : Column(
-                              children: subs.take(6).map((sub) {
-                                final endDate = DateTime.parse(sub['endDate']);
-                                final daysLeft = endDate.difference(DateTime.now()).inDays;
-                                final isExpired = daysLeft < 0;
-                                final isWarning = !isExpired && daysLeft <= 7;
-
-                                return ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor: (isExpired ? Colors.red : Colors.green).withOpacity(0.1),
-                                    child: Text(
-                                      (sub['customerName'] as String? ?? 'U')[0].toUpperCase(),
-                                      style: TextStyle(
-                                        color: isExpired ? Colors.red : Colors.green,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  title: Text(sub['customerName'] ?? 'Unknown'),
-                                  subtitle: Text(
-                                    '${isAr ? 'ينتهي:' : 'Expires:'} ${endDate.toLocal().toString().split(' ')[0]}',
-                                    style: TextStyle(
-                                      color: isExpired ? Colors.red : isWarning ? Colors.orange : Colors.grey,
-                                    ),
-                                  ),
-                                  trailing: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: (isExpired ? Colors.red : isWarning ? Colors.orange : Colors.green).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      isExpired
-                                          ? s('subExpired')
-                                          : isWarning
-                                              ? '$daysLeft ${isAr ? 'يوم متبقي' : 'days left'}'
-                                              : s('subActive'),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: isExpired ? Colors.red : isWarning ? Colors.orange : Colors.green,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
                     ),
                   ),
 
-                const SizedBox(height: 24),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isDesktop = constraints.maxWidth > 1024;
+                      final isTablet = constraints.maxWidth > 600 && !isDesktop;
 
-                // ── Recent Bookings Table ──
-                _chartCard(
-                  context,
-                  s('dashRecentBookings'),
-                  bookings.isEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Center(child: Text(s('dashNoBookings'), style: const TextStyle(color: Colors.grey))),
-                        )
-                      : Column(
-                          children: bookings.reversed.take(5).map((b) {
-                            final dt = DateTime.parse(b['startTime']).toLocal();
-                            final isFullDay = b['isFullDayBlock'] == true;
-                            return ListTile(
-                              leading: Icon(
-                                isFullDay ? Icons.calendar_month : Icons.timer,
-                                color: isFullDay ? Colors.orange : Colors.blue,
-                              ),
-                              title: Text(b['customerName'] ?? 'Walk-in'),
-                              subtitle: Text('${dt.day}/${dt.month}/${dt.year}  '
-                                  '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}'),
-                              trailing: Chip(
-                                label: Text(isFullDay ? s('dashFullDay') : s('dashHourly')),
-                                backgroundColor:
-                                    isFullDay ? Colors.orange.withOpacity(0.1) : Colors.blue.withOpacity(0.1),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                ),
-              ],
+                      return Flex(
+                        direction: isDesktop ? Axis.horizontal : Axis.vertical,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Left Column: KPIs and Chart
+                          Expanded(
+                            flex: isDesktop ? 2 : 0,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Bento Grid
+                                GridView.count(
+                                  crossAxisCount: isDesktop || isTablet ? 2 : 1,
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  childAspectRatio:
+                                      2.2, // Adjust depending on card design
+                                  children: [
+                                    _buildKpiCard(
+                                      context,
+                                      AppStrings.t('dashTotalRevenue', isAr),
+                                      '\$${totalRev.toStringAsFixed(0)}',
+                                      Icons.payments,
+                                      '+12%',
+                                      true,
+                                    ),
+                                    if (subsAsync != null)
+                                      subsAsync.when(
+                                        data: (subs) => _buildKpiCard(
+                                          context,
+                                          AppStrings.t('dashActiveSubs', isAr),
+                                          '${subs.length}',
+                                          Icons.card_membership,
+                                          null,
+                                          false,
+                                        ),
+                                        loading: () => _buildKpiCard(
+                                          context,
+                                          AppStrings.t('dashActiveSubs', isAr),
+                                          '...',
+                                          Icons.card_membership,
+                                          null,
+                                          false,
+                                        ),
+                                        error: (_, __) => _buildKpiCard(
+                                          context,
+                                          AppStrings.t('dashActiveSubs', isAr),
+                                          '0',
+                                          Icons.card_membership,
+                                          null,
+                                          false,
+                                        ),
+                                      )
+                                    else
+                                      _buildKpiCard(
+                                        context,
+                                        AppStrings.t('dashResources', isAr),
+                                        '1',
+                                        Icons.business,
+                                        null,
+                                        false,
+                                      ),
+                                    _buildKpiCard(
+                                      context,
+                                      AppStrings.t('dashTodayBookings', isAr),
+                                      '$todayCount',
+                                      Icons.event_available,
+                                      null,
+                                      false,
+                                    ),
+                                    _buildKpiCard(
+                                      context,
+                                      AppStrings.t('dashOccupancy', isAr),
+                                      occupancyRate,
+                                      Icons.pie_chart,
+                                      AppStrings.t('dashHighDemand', isAr),
+                                      false,
+                                      isWarning: true,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
+
+                                // Sparkline Chart
+                                _buildChartCard(context, isAr, chartData, chartLabels),
+                              ],
+                            ),
+                          ),
+
+                          if (isDesktop) const SizedBox(width: 24),
+                          if (!isDesktop) const SizedBox(height: 24),
+
+                          // Right Column: Recent Activity
+                          Expanded(
+                            flex: isDesktop ? 1 : 0,
+                            child: _buildRecentActivity(
+                              context,
+                              todayBookings,
+                              isAr,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -279,68 +265,436 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  // KPI card for subscriptions — reads its own async state internally
-  Widget _subsKpiCard(BuildContext context, AsyncValue<List<dynamic>> subsAsync, String Function(String) s) {
-    return subsAsync.when(
-      loading: () => _kpiCard(context, s('dashActiveSubs'), '...', Icons.card_membership, Colors.green),
-      error: (_, __) => _kpiCard(context, s('dashActiveSubs'), 'Err', Icons.card_membership, Colors.red),
-      data: (subs) {
-        final activeCount = subs.where((sub) {
-          final endDate = DateTime.parse(sub['endDate']);
-          return endDate.isAfter(DateTime.now());
-        }).length;
-        return _kpiCard(context, s('dashActiveSubs'), '$activeCount', Icons.card_membership, Colors.green);
-      },
-    );
-  }
-
-  Widget _kpiCard(BuildContext context, String title, String value, IconData icon, Color color) {
+  Widget _buildKpiCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+    String? badge,
+    bool primaryBadge, {
+    bool isWarning = false,
+  }) {
     return Container(
-      width: 210,
-      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
-            child: Icon(icon, color: color, size: 26),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.02),
+            blurRadius: 8,
           ),
-          const SizedBox(width: 12),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Stack(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        Icon(
+                          icon,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          value,
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'JetBrains Mono',
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        if (badge != null) ...[
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isWarning
+                                  ? Theme.of(
+                                      context,
+                                    ).colorScheme.error.withValues(alpha: 0.15)
+                                  : (primaryBadge
+                                        ? Theme.of(context).colorScheme.primary
+                                              .withValues(alpha: 0.15)
+                                        : Theme.of(context).colorScheme.primary
+                                              .withValues(alpha: 0.05)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                if (primaryBadge)
+                                  Icon(
+                                    Icons.trending_up,
+                                    size: 14,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                if (primaryBadge) const SizedBox(width: 4),
+                                Text(
+                                  badge,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: isWarning
+                                        ? Theme.of(context).colorScheme.error
+                                        : Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+                Positioned.directional(
+                  textDirection: Directionality.of(context),
+                  end: -10,
+                  bottom: -10,
+                  child: Opacity(
+                    opacity: 0.05,
+                    child: Icon(
+                      icon,
+                      size: 80,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChartCard(BuildContext context, bool isAr, List<double> chartData, List<String> chartLabels) {
+    final maxRev = chartData.isEmpty ? 0.0 : chartData.reduce(math.max);
+    final interval = maxRev > 0 ? (maxRev / 4).ceilToDouble() : 2500.0;
+    final validInterval = interval == 0 ? 2500.0 : interval;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        AppStrings.t('dashWeeklyTrend', isAr),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    DropdownButton<String>(
+                      value: _chartTimeframe,
+                      underline: const SizedBox(),
+                      icon: Icon(Icons.arrow_drop_down, color: Theme.of(context).colorScheme.primary),
+                      items: ['Weekly', 'Monthly', 'Yearly'].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(
+                            isAr ? (value == 'Weekly' ? 'أسبوعي' : value == 'Monthly' ? 'شهري' : 'سنوي') : value,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _chartTimeframe = newValue;
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  height: 250,
+                  child: LineChart(
+                    LineChartData(
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        horizontalInterval: validInterval,
+                        getDrawingHorizontalLine: (value) => FlLine(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+                          strokeWidth: 1,
+                        ),
+                      ),
+                      titlesData: FlTitlesData(
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 40,
+                            interval: validInterval,
+                            getTitlesWidget: (val, meta) => Text(
+                              '\$${(val / 1000).toStringAsFixed(1)}k',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            interval: 1,
+                            getTitlesWidget: (val, meta) {
+                              if (val >= 0 && val < chartLabels.length) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    chartLabels[val.toInt()],
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return const SizedBox();
+                            },
+                          ),
+                        ),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: List.generate(
+                            chartData.length,
+                            (index) => FlSpot(index.toDouble(), chartData[index]),
+                          ),
+                          isCurved: true,
+                          color: Theme.of(context).colorScheme.primary,
+                          barWidth: 3,
+                          isStrokeCapRound: true,
+                          dotData: FlDotData(
+                            show: true,
+                            getDotPainter: (spot, percent, barData, index) =>
+                                FlDotCirclePainter(
+                                  radius: 4,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  strokeWidth: 2,
+                                  strokeColor: Theme.of(context).colorScheme.surface,
+                                ),
+                          ),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            gradient: LinearGradient(
+                              colors: [
+                                Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.2),
+                                Colors.transparent,
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentActivity(
+    BuildContext context,
+    List<Map<String, dynamic>> todayBookings,
+    bool isAr,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppStrings.t('dashRecentActivity', isAr),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              if (todayBookings.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Center(
+                    child: Text(
+                      AppStrings.t('dashNoActivity', isAr),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                ...todayBookings
+                    .take(6)
+                    .map((b) => _buildActivityItem(context, b, isAr)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityItem(
+    BuildContext context,
+    Map<String, dynamic> booking,
+    bool isAr,
+  ) {
+    final title = booking['customerName'] ?? 'Walk-in';
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.1),
+            child: Icon(
+              Icons.pool,
+              color: Theme.of(context).colorScheme.primary,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                Text(
+                  '${AppStrings.t('dashBookingLabel', isAr)} $title',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                Text(
+                  AppStrings.t('dashStatusConfirmed', isAr),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _chartCard(BuildContext context, String title, Widget content) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.only(bottom: 0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          content,
+          Text(
+            AppStrings.t('dashJustNow', isAr),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 11,
+              fontFamily: 'JetBrains Mono',
+            ),
+          ),
         ],
       ),
     );

@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'router/app_router.dart';
 import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const ProviderScope(child: SaasApp()));
@@ -35,21 +36,8 @@ class SaasApp extends ConsumerWidget {
       ],
 
       // ── Theme ─────────────────────────────────────────────────────────────
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-        fontFamily: locale.languageCode == 'ar' ? null : null,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       routerConfig: router,
     );

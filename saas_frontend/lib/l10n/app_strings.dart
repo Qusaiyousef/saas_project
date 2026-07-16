@@ -73,6 +73,7 @@ class AppStrings {
 
     // ── POS ───────────────────────────────────────────────────────────────────
     'posTitle': {'en': 'Quick POS Entry', 'ar': 'إدخال سريع - نقطة البيع'},
+    'posCustomer': {'en':'Customer','ar':'عميل'},
     'posNewBooking': {
       'en': 'New Booking / Walk-in',
       'ar': 'حجز جديد / زيارة مباشرة',
@@ -80,6 +81,10 @@ class AppStrings {
     'posCustomerName': {
       'en': 'Customer Name (optional)',
       'ar': 'اسم العميل (اختياري)',
+    },
+    'SelectCustomer': {
+      'en': 'Select Customer...',
+      'ar': '...بحث عن عميل',
     },
     'posDate': {'en': 'Date:', 'ar': 'التاريخ:'},
     'posChangeDate': {
@@ -248,6 +253,92 @@ class AppStrings {
     'customerAddNew':   {'en': 'New Customer', 'ar': 'إضافة عميل'},
     'customerNoData':   {'en': 'No customers yet.', 'ar': 'لا يوجد عملاء بعد.'},
     'customerDeleteWarning': {'en': 'Are you sure you want to delete this customer? All their records will be affected.', 'ar': 'هل أنت متأكد من حذف هذا العميل؟ ستتأثر جميع سجلاته.'},
+    // ── Missing Translations ──────────────────────────────────────────────────
+    'notSet': {'en': 'Not Set', 'ar': 'لم يحدد'},
+    'payDebt': {'en': 'Pay Debt', 'ar': 'تسديد دفعة'},
+    'customerColon': {'en': 'Customer:', 'ar': 'العميل:'},
+    'remainingDebt': {'en': 'Remaining Debt:', 'ar': 'الديون المتبقية:'},
+    'amountToPayNow': {'en': 'Amount to pay now', 'ar': 'المبلغ المراد سداده الآن'},
+    'paymentSuccessful': {'en': 'Payment successful', 'ar': 'تم سداد الدفعة بنجاح'},
+    'payBtn': {'en': 'Pay', 'ar': 'دفع'},
+    'paymentHistory': {'en': 'Payment History', 'ar': 'سجل الدفعات'},
+    'paymentHistoryColon': {'en': 'Payment History:', 'ar': 'سجل الدفعات:'},
+    'noPaymentHistory': {'en': 'No payment history found.', 'ar': 'لا يوجد سجل دفعات.'},
+    'closeBtn': {'en': 'Close', 'ar': 'إغلاق'},
+    'searchNamePhone': {'en': 'Search by name or phone...', 'ar': 'بحث بالاسم أو رقم الهاتف...'},
+    'searchName': {'en': 'Search by name...', 'ar': 'بحث بالاسم...'},
+    'noResultsFound': {'en': 'No results found.', 'ar': 'لم يتم العثور على نتائج.'},
+    
+    'walkInCustomer': {'en': 'Walk-in Customer', 'ar': 'عميل مباشر'},
+    'newCustomerWalkIn': {'en': 'New Customer / Walk-in', 'ar': 'عميل جديد (أدخل اسمه أدناه)'},
+    'subscribedSuffix': {'en': ' (Subscribed)', 'ar': ' (مشترك)'},
+    'totalPrice': {'en': 'Total Price', 'ar': 'إجمالي السعر'},
+    'totalPriceColon': {'en': 'Total Price:', 'ar': 'إجمالي السعر:'},
+    'amountPaidNow': {'en': 'Amount Paid Now', 'ar': 'المبلغ المدفوع الان'},
+    
+    'searchCustomer': {'en': 'Search Customer', 'ar': 'بحث عن عميل'},
+    'pleaseSelectCustomer': {'en': 'Please select or add a new customer', 'ar': 'يرجى اختيار عميل أو إضافة عميل جديد'},
+    'daysLeft': {'en': 'Days Left', 'ar': 'الأيام المتبقية'},
+    'days': {'en': 'days', 'ar': 'يوم'},
+    'inProgress': {'en': 'In Progress', 'ar': 'جارية'},
+    'completed': {'en': 'Completed', 'ar': 'مكتمل'},
+    'confirmed': {'en': 'Confirmed', 'ar': 'مؤكد'},
+    'hourlyBooking': {'en': 'Hourly Booking', 'ar': 'حجز بالساعة'},
+    // ── Extra Dashboard & Finance ─────────────────────────────────────────────
+    'dashOverview': {'en': 'Overview of your business', 'ar': 'نظرة عامة على عملك'},
+    'dashWeeklyTrend': {'en': 'Weekly Revenue Trend', 'ar': 'اتجاه الإيرادات الأسبوعية'},
+    'dashRecentActivity': {'en': 'Recent Activity', 'ar': 'النشاط الأخير'},
+    'dashViewAll': {'en': 'View All', 'ar': 'عرض الكل'},
+    'dashHighDemand': {'en': 'High Demand', 'ar': 'طلب عالٍ'},
+    'dashBookingLabel': {'en': 'Booking:', 'ar': 'حجز:'},
+    'dashStatusConfirmed': {'en': 'Status: Confirmed', 'ar': 'الحالة: مؤكد'},
+    'dashJustNow': {'en': 'Just now', 'ar': 'الآن'},
+    
+    'finRecentTrans': {'en': 'Recent Transactions', 'ar': 'أحدث المعاملات'},
+    'finAllTypes': {'en': 'All Types', 'ar': 'جميع الأنواع'},
+    'finBookings': {'en': 'Bookings', 'ar': 'حجوزات'},
+    'finSubscriptions': {'en': 'Subscriptions', 'ar': 'اشتراكات'},
+    'finNoTrans': {'en': 'No transactions found', 'ar': 'لا توجد معاملات'},
+    'finMethod': {'en': 'Method', 'ar': 'الطريقة'},
+    'finShowing': {'en': 'Total entries:', 'ar': 'إجمالي المعاملات:'},
+    
+    'posSubtitle': {'en': 'Manage your Walk-in bookings easily', 'ar': 'إدارة حجوزات نقطة البيع بسهولة'},
+    // ── Additional Dashboard Translations ─────────────────────────────────────
+    'dashWelcome': {'en': 'Welcome back, ', 'ar': 'مرحباً بك مجدداً، '},
+    'dashSubtitle': {'en': "Here's what's happening at AquaFit Pro today.", 'ar': 'إليك ما يحدث في نظامك اليوم.'},
+    'dashResources': {'en': 'RESOURCES', 'ar': 'الموارد'},
+    'dashOccupancy': {'en': 'OCCUPANCY RATE', 'ar': 'معدل الإشغال'},
+    'dashNoActivity': {'en': 'No activity today', 'ar': 'لا يوجد نشاط اليوم'},
+    // ── Additional Finance Translations ───────────────────────────────────────
+    'finSubtitle': {'en': 'Overview of your current financial standing and recent transactions.', 'ar': 'نظرة عامة على وضعك المالي الحالي والمعاملات الأخيرة.'},
+    'finCurrentBalance': {'en': 'CURRENT BALANCE', 'ar': 'الرصيد الحالي'},
+    'finLastMonth': {'en': '+4.2% from last month', 'ar': '+4.2% عن الشهر الماضي'},
+    'finTotalCash': {'en': 'TOTAL CASH IN DRAWER', 'ar': 'إجمالي النقد في الصندوق'},
+    'finReconciled': {'en': 'Last reconciled 2h ago', 'ar': 'آخر تسوية منذ ساعتين'},
+    'finReconcileNow': {'en': 'Reconcile Now', 'ar': 'تسوية الآن'},
+    'finSearchHint': {'en': 'Search transactions...', 'ar': 'ابحث في المعاملات...'},
+    // ____ Additional user management translations 
+    'usersSubtitle': {'en': 'Manage employee accounts, roles, and permissions.', 'ar':'إدارة حسابات الموظفين وأدوارهم وصلاحياتهم.'},
+     
+
+    // ____ Additional Subscription translations 
+    'subSubtitle': {'en': 'Manage active memberships and plans.', 'ar':'إدارة العضويات والخطط النشطة.'},
+    'supRecentTrans': {'en': 'All Subscriptions', 'ar':'جميع الاشتراكات'},
+    // ____ Additional Customer translations
+    'customersSubtitle': {'en': 'Manage customer profiles, balances, and payment history.', 'ar':'إدارة ملفات العملاء، الأرصدة، وسجل الدفعات.'},
+
+    // ____ Additional Calendar translations
+    'calSubtitle': {'en': 'View and manage scheduled bookings.', 'ar':'عرض وإدارة الحجوزات المجدولة.'},
+
+
+    'appsuptitle': {'en': 'Smart Booking', 'ar': ' الحجوزات الذكي'},
+
+    // ── Printing Translations ─────────────────────────────────────────────────
+    'printReceipt': {'en': 'Print Receipt', 'ar': 'طباعة الفاتورة'},
+    'autoPrint': {'en': 'Auto-print Receipt', 'ar': 'طباعة تلقائية'},
+    'receiptTitlePos': {'en': 'POS Receipt', 'ar': 'فاتورة مبيعات'},
+    'receiptTitleSub': {'en': 'Subscription Receipt', 'ar': 'فاتورة اشتراك'},
+
   };
 
   static String t(String key, bool isAr) {

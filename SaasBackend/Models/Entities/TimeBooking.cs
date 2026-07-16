@@ -31,4 +31,7 @@ public class TimeBooking : ITenantEntity
     
     public decimal TotalAmount { get; set; }
     public decimal AmountPaid { get; set; }
+
+    [MaxLength(50)]
+    public string PaymentMethod { get; set; } = "Cash";
 }
