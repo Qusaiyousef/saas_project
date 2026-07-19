@@ -203,59 +203,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ? const CircularProgressIndicator()
                           : Text(s('loginButton')),
                     ),
-                    const SizedBox(height: 16),
-
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Text(
-                          //   s('loginDemoLabel'),
-                          //   style: const TextStyle(
-                          //     fontWeight: FontWeight.bold,
-                          //     fontSize: 12,
-                          //   ),
-                          // ),
-                          // const SizedBox(height: 4),
-                          // const Text(
-                          //   '🏊 Pool Admin:   qusai / Admin123!',
-                          //   style: TextStyle(fontSize: 11),
-                          // ),
-                          // const Text(
-                          //   '🏊 Pool Emp:     ali / Ali1234!',
-                          //   style: TextStyle(fontSize: 11),
-                          // ),
-                          // const Text(
-                          //   '💪 Gym Admin:    gym_admin / Admin123!',
-                          //   style: TextStyle(fontSize: 11),
-                          // ),
-                          // const Text(
-                          //   '💪 Gym Emp:      gym_emp / Emp1234!',
-                          //   style: TextStyle(fontSize: 11),
-                          // ),
-                          // const Text(
-                          //   '🏡 Chalet Admin: chalet_admin / Admin123!',
-                          //   style: TextStyle(fontSize: 11),
-                          // ),
-                          // const Text(
-                          //   '🏡 Chalet Emp:   chalet_emp / Emp1234!',
-                          //   style: TextStyle(fontSize: 11),
-                          // ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
