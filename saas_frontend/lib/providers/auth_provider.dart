@@ -5,12 +5,14 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/tenant_type.dart';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 // === إعدادات الرابط (API Configuration) ===
 
 //const String API_BASE_URL = 'http://localhost:5286/api';
 
-// لرفع الموقع على الإنترنت (Production) :
- const String API_BASE_URL = '/api';
+// لرفع الموقع على الإنترنت والموبايل :
+final String API_BASE_URL = kIsWeb ? '/api' : 'http://qusaiali-001-site1.ktempurl.com/api';
 // =========================================
 
 class AuthState {
