@@ -68,6 +68,22 @@ class BookingsNotifier extends AsyncNotifier<List<dynamic>> {
       throw Exception(msg);
     }
   }
+
+  Future<void> cancelBooking(String id, double feePercentage) async {
+    final dio = ref.read(dioProvider);
+    try {
+      await dio.put('/bookings/$id/cancel?feePercentage=$feePercentage');
+      ref.invalidateSelf();
+    } on DioException catch (e) {
+      String msg = 'Failed to cancel booking';
+      if (e.response?.data is Map<String, dynamic>) {
+        msg = e.response?.data['message'] ?? msg;
+      } else if (e.response?.data is String) {
+        msg = e.response?.data as String;
+      }
+      throw Exception(msg);
+    }
+  }
 }
 
 final bookingsProvider = AsyncNotifierProvider<BookingsNotifier, List<dynamic>>(() {

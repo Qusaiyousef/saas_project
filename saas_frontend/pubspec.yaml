@@ -48,6 +48,7 @@ dependencies:
   printing: ^5.15.0
   pdf: ^3.13.0
   intl: ^0.20.2
+  local_auth: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -75,6 +76,8 @@ flutter:
   assets:
     - assets/images/logo.png
     - assets/app_icon.png
+    - assets/fonts/Cairo-Regular.ttf
+    - assets/fonts/Cairo-Bold.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

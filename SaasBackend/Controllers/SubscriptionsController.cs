@@ -58,4 +58,27 @@ public class SubscriptionsController : ControllerBase
         var subscriptions = await _subscriptionService.GetActiveSubscriptionsAsync(resourceId);
         return Ok(subscriptions);
     }
+
+    [HttpPut("{id}/cancel")]
+    public async Task<IActionResult> CancelSubscription(Guid id)
+    {
+        try
+        {
+            var cancelled = await _subscriptionService.CancelSubscriptionAsync(id);
+            if (cancelled == null) return NotFound(new { message = "Subscription not found." });
+
+            var tenantId = _tenantProvider.GetTenantId();
+            if (tenantId.HasValue)
+            {
+                _cache.Remove($"FinanceSummary_{tenantId.Value}");
+                _cache.Remove($"FinanceTransactions_{tenantId.Value}");
+            }
+
+            return Ok(new { message = "Subscription cancelled successfully." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Error cancelling subscription: {ex.Message}" });
+        }
+    }
 }

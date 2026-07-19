@@ -17,6 +17,15 @@ class CustomersScreen extends ConsumerStatefulWidget {
 
 class _CustomersScreenState extends ConsumerState<CustomersScreen> {
   String _searchQuery = '';
+  int? _sortColumnIndex = 0; // Default to Name
+  bool _sortAscending = true; // A-Z
+
+  void _sort(int columnIndex, bool ascending) {
+    setState(() {
+      _sortColumnIndex = columnIndex;
+      _sortAscending = ascending;
+    });
+  }
 
   int? _calculateAge(String? dobString) {
     if (dobString == null || dobString.isEmpty) return null;
@@ -342,6 +351,12 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
               elevation: 0,
             )
           : null,
+      floatingActionButton: MediaQuery.of(context).size.width < 1024
+          ? FloatingActionButton(
+              onPressed: () => _showAddCustomerDialog(context, ref, isAr),
+              child: const Icon(Icons.add),
+            )
+          : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         child: ConstrainedBox(
@@ -522,6 +537,25 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                     phone.contains(_searchQuery);
                               }).toList();
 
+                              if (_sortColumnIndex != null) {
+                                filteredCustomers.sort((a, b) {
+                                  if (_sortColumnIndex == 0) {
+                                    final aName = (a['name'] ?? '').toString();
+                                    final bName = (b['name'] ?? '').toString();
+                                    return _sortAscending ? aName.compareTo(bName) : bName.compareTo(aName);
+                                  } else if (_sortColumnIndex == 3) {
+                                    final aPaid = (a['totalPaid'] as num?)?.toDouble() ?? 0.0;
+                                    final bPaid = (b['totalPaid'] as num?)?.toDouble() ?? 0.0;
+                                    return _sortAscending ? aPaid.compareTo(bPaid) : bPaid.compareTo(aPaid);
+                                  } else if (_sortColumnIndex == 4) {
+                                    final aBal = (a['balance'] as num?)?.toDouble() ?? 0.0;
+                                    final bBal = (b['balance'] as num?)?.toDouble() ?? 0.0;
+                                    return _sortAscending ? aBal.compareTo(bBal) : bBal.compareTo(aBal);
+                                  }
+                                  return 0;
+                                });
+                              }
+
                               if (filteredCustomers.isEmpty) {
                                 return Center(
                                   child: Text(
@@ -536,6 +570,8 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                               }
 
                               return DataTable2(
+                                sortColumnIndex: _sortColumnIndex,
+                                sortAscending: _sortAscending,
                                 columnSpacing: 16,
                                 horizontalMargin: 24,
                                 minWidth: 900,
@@ -556,16 +592,22 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                 dividerThickness: 0.5,
                                 columns: [
                                   DataColumn2(
-                                    label: Text(
-                                      AppStrings.t('customerName', isAr),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
+                                    onSort: _sort,
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          AppStrings.t('customerName', isAr),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        if (_sortColumnIndex != 0)
+                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                      ],
                                     ),
                                     size: ColumnSize.L,
                                   ),
@@ -598,31 +640,43 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                     size: ColumnSize.S,
                                   ),
                                   DataColumn2(
-                                    label: Text(
-                                      AppStrings.t('customerTotalPaid', isAr),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
+                                    onSort: _sort,
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          AppStrings.t('customerTotalPaid', isAr),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        if (_sortColumnIndex != 3)
+                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                      ],
                                     ),
                                     size: ColumnSize.M,
                                     numeric: true,
                                   ),
                                   DataColumn2(
-                                    label: Text(
-                                      AppStrings.t('customerBalance', isAr),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
+                                    onSort: _sort,
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          AppStrings.t('customerBalance', isAr),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        if (_sortColumnIndex != 4)
+                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                      ],
                                     ),
                                     size: ColumnSize.M,
                                     numeric: true,
@@ -814,6 +868,34 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                                 isAr,
                                               ),
                                               onPressed: () async {
+                                                if (c['hasActiveSubscription'] == true) {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (ctx) => AlertDialog(
+                                                      title: Row(
+                                                        children: [
+                                                          Icon(Icons.warning_amber_rounded, color: Theme.of(context).colorScheme.error),
+                                                          const SizedBox(width: 8),
+                                                          Expanded(child: Text(isAr ? 'عذراً، لا يمكن الحذف' : 'Cannot Delete')),
+                                                        ],
+                                                      ),
+                                                      content: Text(
+                                                        isAr 
+                                                          ? 'لا يمكن حذف هذا العميل لأن لديه اشتراك حالي وفعال. الرجاء إلغاء اشتراكه أولاً.' 
+                                                          : 'This customer cannot be deleted because they have an active subscription. Please cancel it first.',
+                                                        style: const TextStyle(fontSize: 15),
+                                                      ),
+                                                      actions: [
+                                                        ElevatedButton(
+                                                          onPressed: () => Navigator.pop(ctx),
+                                                          child: Text(AppStrings.t('ok', isAr)),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                  return;
+                                                }
+
                                                 final confirm = await showDialog<bool>(
                                                   context: context,
                                                   builder: (ctx) => AlertDialog(
@@ -882,12 +964,16 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                                         );
                                                   } catch (e) {
                                                     if (context.mounted) {
+                                                      final errorMsg = e.toString().toLowerCase();
+                                                      final isForeignKey = errorMsg.contains('foreign') || errorMsg.contains('constraint') || errorMsg.contains('500');
                                                       ScaffoldMessenger.of(
                                                         context,
                                                       ).showSnackBar(
                                                         SnackBar(
                                                           content: Text(
-                                                            'Error: $e',
+                                                            isForeignKey 
+                                                              ? (isAr ? 'عذراً، لا يمكن حذف العميل لوجود حجوزات أو مبالغ مالية مرتبطة به.' : 'Cannot delete customer because they have related bookings or transactions.') 
+                                                              : 'Error: $e',
                                                           ),
                                                           backgroundColor:
                                                               Theme.of(context)

@@ -6,6 +6,7 @@ import 'package:data_table_2/data_table_2.dart';
 import '../providers/finance_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_strings.dart';
+import '../services/print_service.dart';
 
 class FinanceScreen extends ConsumerStatefulWidget {
   const FinanceScreen({super.key});
@@ -17,6 +18,44 @@ class FinanceScreen extends ConsumerStatefulWidget {
 class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   String _filterType = 'All'; // All, Bookings, Subscriptions
   String _searchQuery = '';
+  int? _sortColumnIndex = 0; // Default to Date
+  bool _sortAscending = false; // Newest first
+  
+  String _dateRangePreset = 'All Time'; // All Time, Today, This Week, This Month, Custom
+  DateTime? _startDate;
+  DateTime? _endDate;
+
+  void _sort(int columnIndex, bool ascending) {
+    setState(() {
+      _sortColumnIndex = columnIndex;
+      _sortAscending = ascending;
+    });
+  }
+
+  Future<void> _selectDateRange(BuildContext context) async {
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDateRange: _startDate != null && _endDate != null
+          ? DateTimeRange(start: _startDate!, end: _endDate!)
+          : null,
+    );
+    if (picked != null) {
+      setState(() {
+        _dateRangePreset = 'Custom';
+        _startDate = picked.start;
+        _endDate = DateTime(picked.end.year, picked.end.month, picked.end.day, 23, 59, 59);
+      });
+    }
+  }
+
+  void _clearDateFilter() {
+    setState(() {
+      _startDate = null;
+      _endDate = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +76,15 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               title: Text(s('financeTitle')),
               backgroundColor: Colors.transparent,
               elevation: 0,
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.print, color: Theme.of(context).colorScheme.primary),
+                  tooltip: s('print'),
+                  onPressed: transactionsAsync.value == null ? null : () => _printReport(
+                    transactionsAsync.value!, s('financeTitle'), isAr
+                  ),
+                ),
+              ],
             )
           : null,
       body: SingleChildScrollView(
@@ -50,21 +98,36 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               if (MediaQuery.of(context).size.width >= 1024)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        s('financeTitle'),
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            s('financeTitle'),
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            s('finSubtitle'),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        s('finSubtitle'),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontSize: 16,
+                      ElevatedButton.icon(
+                        onPressed: transactionsAsync.value == null ? null : () => _printReport(
+                          transactionsAsync.value!, s('financeTitle'), isAr
+                        ),
+                        icon: const Icon(Icons.print),
+                        label: Text(AppStrings.t('print', isAr)),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                         ),
                       ),
                     ],
@@ -83,12 +146,39 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                   ),
                 ),
                 data: (summary) {
+                  // Recompute summary if date filter is applied
+                  double finalTotalRev = (summary['totalRevenue'] as num?)?.toDouble() ?? 0.0;
+                  double finalTotalCash = (summary['totalCash'] as num?)?.toDouble() ?? 0.0;
+
+                  if ((_startDate != null && _endDate != null) || _filterType != 'All' || _searchQuery.isNotEmpty) {
+                    final allTx = transactionsAsync.value ?? [];
+                    finalTotalRev = 0;
+                    finalTotalCash = 0;
+                    for (var t in allTx) {
+                      final matchesSearch = (t['customerName']?.toString().toLowerCase().contains(_searchQuery) ?? false) ||
+                                            (t['type']?.toString().toLowerCase().contains(_searchQuery) ?? false);
+                      final matchesType = _filterType == 'All' || t['type'] == _filterType;
+                      bool matchesDate = true;
+                      if (_startDate != null && _endDate != null) {
+                        final dt = DateTime.parse(t['date']).toLocal();
+                        matchesDate = dt.compareTo(_startDate!) >= 0 && dt.compareTo(_endDate!) <= 0;
+                      }
+                      if (matchesSearch && matchesType && matchesDate) {
+                        final amt = (t['amount'] as num?)?.toDouble() ?? 0.0;
+                        finalTotalRev += amt;
+                        if (t['method'] == 'Cash') {
+                          finalTotalCash += amt;
+                        }
+                      }
+                    }
+                  }
+
                   return LayoutBuilder(
                     builder: (context, constraints) {
                       final kpi1 = _buildKpiCard(
                         context,
                         s('finCurrentBalance'),
-                        '\$${summary['totalRevenue']}',
+                        '\$${finalTotalRev.toStringAsFixed(2)}',
                         Icons.account_balance,
                         s('finLastMonth'),
                         isPositive: true,
@@ -96,7 +186,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                       final kpi2 = _buildKpiCard(
                         context,
                         s('finTotalCash'),
-                        '\$${summary['totalCash'] ?? 0.0}',
+                        '\$${finalTotalCash.toStringAsFixed(2)}',
                         Icons.payments,
                         s('finReconciled'),
                         isPositive: null,
@@ -239,63 +329,130 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                                       ),
                                     ),
                                   ),
-                                ],
-                              ),
-                            ],
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Theme.of(context).dividerColor,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Theme.of(context).cardColor,
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          value: _dateRangePreset,
+                                          items: [
+                                            DropdownMenuItem(
+                                              value: 'All Time',
+                                              child: Text(isAr ? 'كل الأوقات' : 'All Time'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 'Today',
+                                              child: Text(isAr ? 'اليوم' : 'Today'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 'This Week',
+                                              child: Text(isAr ? 'هذا الأسبوع' : 'This Week'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 'This Month',
+                                              child: Text(isAr ? 'هذا الشهر' : 'This Month'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 'Custom',
+                                              child: Text(isAr ? 'تخصيص...' : 'Custom...'),
+                                            ),
+                                          ],
+                                          onChanged: (val) {
+                                            if (val != null) {
+                                              if (val == 'Custom') {
+                                                _selectDateRange(context);
+                                              } else {
+                                                _applyPreset(val);
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const Divider(height: 1),
+                          const Divider(height: 1),
 
-                        // Table
+                        // Ledger Table
                         SizedBox(
-                          height: 500,
+                          height: 600,
                           child: transactionsAsync.when(
                             loading: () => const Center(
                               child: CircularProgressIndicator(),
                             ),
-                            error: (e, _) =>
-                                Center(child: Text('${s('error')}: $e')),
+                            error: (e, _) => Center(
+                              child: Text(
+                                '${s('error')}: $e',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                            ),
                             data: (transactions) {
-                              final filtered = transactions.where((t) {
-                                final matchSearch = (t['customerName'] ?? '')
-                                    .toLowerCase()
-                                    .contains(_searchQuery);
-                                final matchFilter =
-                                    _filterType == 'All' ||
-                                    (_filterType == 'Bookings' &&
-                                        t['type'] == 'Booking') ||
-                                    (_filterType == 'Subscriptions' &&
-                                        t['type'] == 'Subscription');
-                                return matchSearch && matchFilter;
-                              }).toList();
-
-                              if (filtered.isEmpty) {
-                                return Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.receipt_long,
-                                        size: 64,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
-                                      SizedBox(height: 16),
-                                      Text(
-                                        AppStrings.t('finNoTrans', isAr),
-                                        style: TextStyle(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                              if (transactions.isEmpty) {
+                                return _buildEmptyState(
+                                  context,
+                                  s('finNoTransTitle'),
+                                  s('finNoTransSub'),
                                 );
                               }
 
+                              final filtered = transactions.where((t) {
+                                final matchesSearch = (t['customerName']?.toString().toLowerCase().contains(_searchQuery) ?? false) ||
+                                                      (t['type']?.toString().toLowerCase().contains(_searchQuery) ?? false);
+                                final matchesType = _filterType == 'All' || t['type'] == _filterType;
+                                
+                                bool matchesDate = true;
+                                if (_startDate != null && _endDate != null) {
+                                  final dt = DateTime.parse(t['date']).toLocal();
+                                  matchesDate = dt.compareTo(_startDate!) >= 0 && dt.compareTo(_endDate!) <= 0;
+                                }
+
+                                return matchesSearch && matchesType && matchesDate;
+                              }).toList();
+
+                              if (_sortColumnIndex != null) {
+                                filtered.sort((a, b) {
+                                  if (_sortColumnIndex == 0) {
+                                    final aDate = DateTime.tryParse(a['date'] ?? '') ?? DateTime(1970);
+                                    final bDate = DateTime.tryParse(b['date'] ?? '') ?? DateTime(1970);
+                                    return _sortAscending ? aDate.compareTo(bDate) : bDate.compareTo(aDate);
+                                  } else if (_sortColumnIndex == 2) {
+                                    final aMethod = a['method']?.toString() ?? '';
+                                    final bMethod = b['method']?.toString() ?? '';
+                                    return _sortAscending ? aMethod.compareTo(bMethod) : bMethod.compareTo(aMethod);
+                                  } else if (_sortColumnIndex == 4) {
+                                    final aAmt = double.tryParse('${a['amount']}') ?? 0.0;
+                                    final bAmt = double.tryParse('${b['amount']}') ?? 0.0;
+                                    return _sortAscending ? aAmt.compareTo(bAmt) : bAmt.compareTo(aAmt);
+                                  }
+                                  return 0;
+                                });
+                              }
+
+                              if (filtered.isEmpty) {
+                                return _buildEmptyState(
+                                  context,
+                                  s('finNoTransTitle'),
+                                  s('finNoTransSub'),
+                                );
+                              }
+
+
                               return DataTable2(
+                                sortColumnIndex: _sortColumnIndex,
+                                sortAscending: _sortAscending,
                                 columnSpacing: 16,
                                 horizontalMargin: 24,
                                 minWidth: 800,
@@ -317,14 +474,20 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                                 dividerThickness: 0.5,
                                 columns: [
                                   DataColumn2(
-                                    label: Text(
-                                      AppStrings.t('financeDate', isAr),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
+                                    onSort: _sort,
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          AppStrings.t('financeDate', isAr),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        if (_sortColumnIndex != 0)
+                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                      ],
                                     ),
                                     size: ColumnSize.S,
                                   ),
@@ -341,14 +504,20 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                                     size: ColumnSize.L,
                                   ),
                                   DataColumn2(
-                                    label: Text(
-                                      AppStrings.t('finMethod', isAr),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
+                                    onSort: _sort,
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          AppStrings.t('finMethod', isAr),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        if (_sortColumnIndex != 2)
+                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                      ],
                                     ),
                                     size: ColumnSize.S,
                                   ),
@@ -365,14 +534,20 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                                     size: ColumnSize.S,
                                   ),
                                   DataColumn2(
-                                    label: Text(
-                                      AppStrings.t('financeAmount', isAr),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
+                                    onSort: _sort,
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          AppStrings.t('financeAmount', isAr),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        if (_sortColumnIndex != 4)
+                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                      ],
                                     ),
                                     size: ColumnSize.S,
                                     numeric: true,
@@ -385,6 +560,11 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                                   final isBooking = t['type'] == 'Booking';
                                   final amount =
                                       double.tryParse('${t['amount']}') ?? 0.0;
+                                  final paymentMethodStr = t['method']?.toString() ?? (isBooking ? 'Cash' : 'Card');
+                                  final isTransfer = paymentMethodStr.toLowerCase() == 'transfer';
+                                  final pIcon = isTransfer
+                                      ? Icons.swap_horiz
+                                      : (paymentMethodStr.toLowerCase() == 'card' ? Icons.credit_card : Icons.payments);
 
                                   return DataRow(
                                     cells: [
@@ -412,9 +592,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                                         Row(
                                           children: [
                                             Icon(
-                                              isBooking
-                                                  ? Icons.payments
-                                                  : Icons.credit_card,
+                                              pIcon,
                                               size: 16,
                                               color: Theme.of(
                                                 context,
@@ -422,7 +600,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                                             ),
                                             const SizedBox(width: 8),
                                             Text(
-                                              isBooking ? 'Cash' : 'Card',
+                                              paymentMethodStr,
                                               style: TextStyle(
                                                 color: Theme.of(
                                                   context,
@@ -675,6 +853,88 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, String title, String subtitle) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.receipt_long,
+            size: 64,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _applyPreset(String preset) {
+    final now = DateTime.now();
+    setState(() {
+      _dateRangePreset = preset;
+      if (preset == 'All Time') {
+        _startDate = null;
+        _endDate = null;
+      } else if (preset == 'Today') {
+        _startDate = DateTime(now.year, now.month, now.day);
+        _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      } else if (preset == 'This Week') {
+        _startDate = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
+        _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      } else if (preset == 'This Month') {
+        _startDate = DateTime(now.year, now.month, 1);
+        _endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+      }
+    });
+  }
+
+  Future<void> _printReport(List<dynamic> allTx, String title, bool isAr) async {
+    final filteredTx = allTx.where((t) {
+      final matchesSearch = (t['customerName']?.toString().toLowerCase().contains(_searchQuery) ?? false) ||
+                            (t['type']?.toString().toLowerCase().contains(_searchQuery) ?? false);
+      final matchesType = _filterType == 'All' || t['type'] == _filterType;
+      
+      bool matchesDate = true;
+      if (_startDate != null && _endDate != null) {
+        final dt = DateTime.parse(t['date']).toLocal();
+        matchesDate = dt.isAfter(_startDate!) && dt.isBefore(_endDate!);
+      }
+      return matchesSearch && matchesType && matchesDate;
+    }).toList();
+
+    double totalRev = 0;
+    double totalCash = 0;
+    for(var tx in filteredTx) {
+      final amt = (tx['amount'] as num?)?.toDouble() ?? 0.0;
+      totalRev += amt;
+      if (tx['method'] == 'Cash') {
+        totalCash += amt;
+      }
+    }
+
+    await PrintService.printFinanceReport(
+      isAr: isAr,
+      title: title,
+      summary: {
+        'totalRevenue': totalRev,
+        'totalCash': totalCash
+      },
+      transactions: filteredTx,
+      startDate: _startDate,
+      endDate: _endDate,
     );
   }
 }

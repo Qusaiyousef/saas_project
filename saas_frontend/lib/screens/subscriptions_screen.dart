@@ -21,6 +21,15 @@ class SubscriptionsScreen extends ConsumerStatefulWidget {
 class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
   String _searchQuery = '';
   bool _autoPrint = true;
+  int? _sortColumnIndex = 1; // Default to Start Date
+  bool _sortAscending = false; // Newest first
+
+  void _sort(int columnIndex, bool ascending) {
+    setState(() {
+      _sortColumnIndex = columnIndex;
+      _sortAscending = ascending;
+    });
+  }
 
   @override
   void initState() {
@@ -209,8 +218,13 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                 ),
               ],
             ),
+            actionsAlignment: MainAxisAlignment.spaceBetween,
+            actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             actions: [
               TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(AppStrings.t('cancel', isAr)),
               ),
@@ -372,6 +386,15 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
               elevation: 0,
             )
           : null,
+      floatingActionButton: MediaQuery.of(context).size.width < 1024
+          ? FloatingActionButton(
+              onPressed: () {
+                final cust = customersData.asData?.value ?? [];
+                _showAddDialog(context, ref, isAr, cust);
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         child: ConstrainedBox(
@@ -521,6 +544,31 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                 return name.contains(_searchQuery);
                               }).toList();
 
+                              if (_sortColumnIndex != null) {
+                                filteredSubs.sort((a, b) {
+                                  if (_sortColumnIndex == 0) {
+                                    final aName = (a['customerName'] ?? '').toString();
+                                    final bName = (b['customerName'] ?? '').toString();
+                                    return _sortAscending ? aName.compareTo(bName) : bName.compareTo(aName);
+                                  } else if (_sortColumnIndex == 1) {
+                                    final aDate = DateTime.tryParse(a['startDate'] ?? '') ?? DateTime(1970);
+                                    final bDate = DateTime.tryParse(b['startDate'] ?? '') ?? DateTime(1970);
+                                    return _sortAscending ? aDate.compareTo(bDate) : bDate.compareTo(aDate);
+                                  } else if (_sortColumnIndex == 2) {
+                                    final aDate = DateTime.tryParse(a['endDate'] ?? '') ?? DateTime(1970);
+                                    final bDate = DateTime.tryParse(b['endDate'] ?? '') ?? DateTime(1970);
+                                    return _sortAscending ? aDate.compareTo(bDate) : bDate.compareTo(aDate);
+                                  } else if (_sortColumnIndex == 3) {
+                                    final aEndDate = DateTime.tryParse(a['endDate'] ?? '') ?? DateTime(1970);
+                                    final bEndDate = DateTime.tryParse(b['endDate'] ?? '') ?? DateTime(1970);
+                                    final aDays = aEndDate.difference(DateTime.now()).inDays;
+                                    final bDays = bEndDate.difference(DateTime.now()).inDays;
+                                    return _sortAscending ? aDays.compareTo(bDays) : bDays.compareTo(aDays);
+                                  }
+                                  return 0;
+                                });
+                              }
+
                               if (filteredSubs.isEmpty) {
                                 return Center(
                                   child: Column(
@@ -548,6 +596,8 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                               }
 
                               return DataTable2(
+                                sortColumnIndex: _sortColumnIndex,
+                                sortAscending: _sortAscending,
                                 columnSpacing: 16,
                                 horizontalMargin: 24,
                                 minWidth: 800,
@@ -568,52 +618,76 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                 dividerThickness: 0.5,
                                 columns: [
                                   DataColumn2(
-                                    label: Text(
-                                      AppStrings.t('subMemberName', isAr),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
+                                    onSort: _sort,
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          AppStrings.t('subMemberName', isAr),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        if (_sortColumnIndex != 0)
+                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                      ],
                                     ),
                                     size: ColumnSize.L,
                                   ),
                                   DataColumn2(
-                                    label: Text(
-                                      AppStrings.t('subStartDate', isAr),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
+                                    onSort: _sort,
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          AppStrings.t('subStartDate', isAr),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        if (_sortColumnIndex != 1)
+                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                      ],
                                     ),
                                     size: ColumnSize.M,
                                   ),
                                   DataColumn2(
-                                    label: Text(
-                                      AppStrings.t('subEndDate', isAr),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
+                                    onSort: _sort,
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          AppStrings.t('subEndDate', isAr),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        if (_sortColumnIndex != 2)
+                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                      ],
                                     ),
                                     size: ColumnSize.M,
                                   ),
                                   DataColumn2(
-                                    label: Text(
-                                      AppStrings.t('daysLeft', isAr),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
+                                    onSort: _sort,
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          AppStrings.t('daysLeft', isAr),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        if (_sortColumnIndex != 3)
+                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                      ],
                                     ),
-                                    size: ColumnSize.S,
+                                    size: ColumnSize.M,
                                   ),
                                   DataColumn2(
                                     label: Text(
@@ -702,23 +776,27 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                         ),
                                       ),
                                       DataCell(
-                                        Text(
-                                          isExpired
-                                              ? AppStrings.t('subExpired', isAr)
-                                              : '$daysLeft ${AppStrings.t('days', isAr)}',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: isExpired
-                                                ? Theme.of(
-                                                    context,
-                                                  ).colorScheme.error
-                                                : isWarning
-                                                ? Theme.of(
-                                                    context,
-                                                  ).colorScheme.secondary
-                                                : Theme.of(
-                                                    context,
-                                                  ).colorScheme.primary,
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: isAr ? Alignment.centerRight : Alignment.centerLeft,
+                                          child: Text(
+                                            isExpired
+                                                ? AppStrings.t('subExpired', isAr)
+                                                : '$daysLeft ${AppStrings.t('days', isAr)}',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: isExpired
+                                                  ? Theme.of(
+                                                      context,
+                                                    ).colorScheme.error
+                                                  : isWarning
+                                                  ? Theme.of(
+                                                      context,
+                                                    ).colorScheme.secondary
+                                                  : Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -767,29 +845,81 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                         ),
                                       ),
                                       DataCell(
-                                        IconButton(
-                                          icon: const Icon(Icons.print, size: 20),
-                                          tooltip: AppStrings.t('printReceipt', isAr),
-                                          onPressed: () {
-                                            final mTotalAmount = double.tryParse(sub['totalAmount']?.toString() ?? '0') ?? 0.0;
-                                            final mAmountPaid = double.tryParse(sub['amountPaid']?.toString() ?? '0') ?? 0.0;
-                                            
-                                            final subStart = DateTime.parse(sub['startDate']);
-                                            final subEnd = DateTime.parse(sub['endDate']);
-                                            final diffMonths = (subEnd.difference(subStart).inDays / 30).round();
-                                            final planStr = isAr ? 'اشتراك $diffMonths شهر' : '$diffMonths Months';
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.print, size: 20),
+                                              tooltip: AppStrings.t('printReceipt', isAr),
+                                              onPressed: () {
+                                                final mTotalAmount = double.tryParse(sub['totalAmount']?.toString() ?? '0') ?? 0.0;
+                                                final mAmountPaid = double.tryParse(sub['amountPaid']?.toString() ?? '0') ?? 0.0;
+                                                
+                                                final subStart = DateTime.parse(sub['startDate']);
+                                                final subEnd = DateTime.parse(sub['endDate']);
+                                                final diffMonths = (subEnd.difference(subStart).inDays / 30).round();
+                                                final planStr = isAr ? 'اشتراك $diffMonths شهر' : '$diffMonths Months';
 
-                                            PrintService.printReceipt(
-                                              isAr: isAr,
-                                              title: AppStrings.t('receiptTitleSub', isAr),
-                                              customerName: sub['customerName'] ?? '',
-                                              items: [{'name': planStr, 'price': mTotalAmount}],
-                                              totalAmount: mTotalAmount,
-                                              amountPaid: mAmountPaid,
-                                              paymentMethod: sub['paymentMethod'] ?? (isAr ? 'كاش' : 'Cash'),
-                                              date: subStart,
-                                            );
-                                          },
+                                                PrintService.printReceipt(
+                                                  isAr: isAr,
+                                                  title: AppStrings.t('receiptTitleSub', isAr),
+                                                  customerName: sub['customerName'] ?? '',
+                                                  items: [{'name': planStr, 'price': mTotalAmount}],
+                                                  totalAmount: mTotalAmount,
+                                                  amountPaid: mAmountPaid,
+                                                  paymentMethod: sub['paymentMethod'] ?? (isAr ? 'كاش' : 'Cash'),
+                                                  date: subStart,
+                                                );
+                                              },
+                                            ),
+                                            if (!isExpired)
+                                              IconButton(
+                                                icon: Icon(Icons.cancel, size: 20, color: Theme.of(context).colorScheme.error),
+                                                tooltip: isAr ? 'إلغاء الاشتراك' : 'Cancel Subscription',
+                                                onPressed: () async {
+                                                  final confirm = await showDialog<bool>(
+                                                    context: context,
+                                                    builder: (ctx) => AlertDialog(
+                                                      title: Text(isAr ? 'تأكيد إلغاء الاشتراك' : 'Confirm Cancellation'),
+                                                      content: Text(isAr 
+                                                        ? 'هل أنت متأكد من إلغاء هذا الاشتراك؟ سيمكنك بعدها حذف العميل إذا لم يكن لديه سجلات أخرى.' 
+                                                        : 'Are you sure you want to cancel this subscription? You can then delete the customer if they have no other records.'),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () => Navigator.pop(ctx, false),
+                                                          child: Text(AppStrings.t('cancel', isAr)),
+                                                        ),
+                                                        ElevatedButton(
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: Theme.of(context).colorScheme.error,
+                                                            foregroundColor: Theme.of(context).colorScheme.onError,
+                                                          ),
+                                                          onPressed: () => Navigator.pop(ctx, true),
+                                                          child: Text(isAr ? 'إلغاء الاشتراك' : 'Cancel Subscription'),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                  
+                                                  if (confirm == true) {
+                                                    try {
+                                                      await ref.read(subscriptionProvider.notifier).cancelSubscription(sub['id']);
+                                                      if (context.mounted) {
+                                                        ScaffoldMessenger.of(context).showSnackBar(
+                                                          SnackBar(content: Text(isAr ? 'تم إلغاء الاشتراك بنجاح' : 'Subscription cancelled successfully')),
+                                                        );
+                                                      }
+                                                    } catch (e) {
+                                                      if (context.mounted) {
+                                                        ScaffoldMessenger.of(context).showSnackBar(
+                                                          SnackBar(content: Text('Error: $e'), backgroundColor: Theme.of(context).colorScheme.error),
+                                                        );
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                              ),
+                                          ],
                                         ),
                                       ),
                                     ],

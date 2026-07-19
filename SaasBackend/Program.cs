@@ -96,6 +96,9 @@ app.UseCors("AllowFlutter");
 // Remove HTTPS redirect to avoid issues in dev
 // app.UseHttpsRedirection();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseAuthentication();
 
 // Insert Tenant Middleware after Authentication but before Authorization
@@ -104,6 +107,7 @@ app.UseMiddleware<TenantMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapFallbackToFile("index.html");
 
 // Seed Default Users
 using (var scope = app.Services.CreateScope())

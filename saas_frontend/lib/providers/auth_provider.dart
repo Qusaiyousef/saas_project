@@ -5,6 +5,14 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/tenant_type.dart';
 
+// === إعدادات الرابط (API Configuration) ===
+
+//const String API_BASE_URL = 'http://localhost:5286/api';
+
+// لرفع الموقع على الإنترنت (Production) :
+ const String API_BASE_URL = '/api';
+// =========================================
+
 class AuthState {
   final bool isAuthenticated;
   final TenantType? tenantType;
@@ -46,7 +54,7 @@ class AuthState {
 }
 
 class AuthNotifier extends Notifier<AuthState> {
-  final Dio _dio = Dio(BaseOptions(baseUrl: 'http://qusaiali-001-site1.ktempurl.com/api')); // Update port if needed
+  final Dio _dio = Dio(BaseOptions(baseUrl: API_BASE_URL));
 
   @override
   AuthState build() {
@@ -99,7 +107,7 @@ class AuthNotifier extends Notifier<AuthState> {
       final authState = state;
       if (authState.token == null) return;
       
-      final dio = Dio(BaseOptions(baseUrl: 'http://qusaiali-001-site1.ktempurl.com/api'));
+      final dio = Dio(BaseOptions(baseUrl: API_BASE_URL));
       dio.interceptors.add(InterceptorsWrapper(
         onRequest: (options, handler) {
           options.headers['Authorization'] = 'Bearer ${authState.token}';
@@ -184,7 +192,7 @@ final authProvider = NotifierProvider<AuthNotifier, AuthState>(() {
 // Provide a global Dio instance that injects the JWT token
 final dioProvider = Provider<Dio>((ref) {
   final authState = ref.watch(authProvider);
-  final dio = Dio(BaseOptions(baseUrl: 'http://qusaiali-001-site1.ktempurl.com/api'));
+  final dio = Dio(BaseOptions(baseUrl: API_BASE_URL));
   
   if (authState.token != null) {
     dio.interceptors.add(InterceptorsWrapper(

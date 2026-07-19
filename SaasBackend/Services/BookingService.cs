@@ -94,4 +94,39 @@ public class BookingService : IBookingService
             .OrderBy(b => b.StartTime)
             .ToListAsync();
     }
+
+    public async Task<TimeBooking?> CancelBookingAsync(Guid id, decimal feePercentage)
+    {
+        var booking = await _context.TimeBookings.FindAsync(id);
+        if (booking == null) return null;
+
+        booking.Status = BookingStatus.Cancelled;
+
+        var fee = booking.TotalAmount * (feePercentage / 100m);
+        if (fee > booking.AmountPaid) fee = booking.AmountPaid;
+
+        booking.TotalAmount = fee;
+        booking.AmountPaid = fee;
+
+        var payment = await _context.PaymentRecords
+            .FirstOrDefaultAsync(p => p.TimeBookingId == id);
+
+        if (payment != null)
+        {
+            if (fee <= 0)
+            {
+                _context.PaymentRecords.Remove(payment);
+            }
+            else
+            {
+                payment.Amount = fee;
+                payment.Notes = string.IsNullOrEmpty(payment.Notes) 
+                    ? $"Cancellation Fee ({feePercentage}%)" 
+                    : payment.Notes + $" - Cancellation Fee ({feePercentage}%)";
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return booking;
+    }
 }

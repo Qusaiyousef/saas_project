@@ -80,6 +80,15 @@ List<NavItem> buildNavItems(
         AppStrings.t('navSubscriptions', isAr),
       ),
     );
+    // Check-In: يظهر فقط للمسبح والجيم
+    items.add(
+      NavItem(
+        '/checkin',
+        Icons.how_to_reg_outlined,
+        Icons.how_to_reg,
+        AppStrings.t('navCheckin', isAr),
+      ),
+    );
   }
   if (hasPerm('canAccessFinance')) {
     items.add(

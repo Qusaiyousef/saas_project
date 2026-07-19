@@ -41,8 +41,20 @@ public class SubscriptionService : ISubscriptionService
     {
         // Return all subscriptions for this resource (tenant filter applied automatically via global filter)
         return await _context.Subscriptions
-            .Where(s => s.ResourceId == resourceId)
+            .Where(s => s.ResourceId == resourceId && s.Status == SubscriptionStatus.Active)
             .OrderByDescending(s => s.StartDate)
             .ToListAsync();
+    }
+
+    public async Task<Subscription?> CancelSubscriptionAsync(Guid id)
+    {
+        var subscription = await _context.Subscriptions.FindAsync(id);
+        if (subscription == null) return null;
+
+        subscription.Status = SubscriptionStatus.Cancelled;
+        subscription.EndDate = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return subscription;
     }
 }

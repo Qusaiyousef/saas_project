@@ -6,4 +6,5 @@ public interface ISubscriptionService
 {
     Task<Subscription> CreateSubscriptionAsync(Subscription subscription);
     Task<IEnumerable<Subscription>> GetActiveSubscriptionsAsync(Guid resourceId);
+    Task<Subscription?> CancelSubscriptionAsync(Guid id);
 }

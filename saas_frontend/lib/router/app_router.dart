@@ -13,6 +13,7 @@ import '../screens/settings_screen.dart';
 import '../screens/finance_screen.dart';
 import '../screens/users_screen.dart';
 import '../screens/customers_screen.dart';
+import '../screens/checkin_screen.dart';
 
 // Use a separate provider for the listenable so GoRouter can react to state changes
 final _authStateListenableProvider = Provider<AuthStateListenable>((ref) {
@@ -116,6 +117,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/customers',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: CustomersScreen()),
+          ),
+          GoRoute(
+            path: '/checkin',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: CheckInScreen()),
           ),
         ],
       ),

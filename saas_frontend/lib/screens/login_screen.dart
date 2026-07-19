@@ -221,38 +221,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            s('loginDemoLabel'),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            '🏊 Pool Admin:   qusai / Admin123!',
-                            style: TextStyle(fontSize: 11),
-                          ),
-                          const Text(
-                            '🏊 Pool Emp:     ali / Ali1234!',
-                            style: TextStyle(fontSize: 11),
-                          ),
-                          const Text(
-                            '💪 Gym Admin:    gym_admin / Admin123!',
-                            style: TextStyle(fontSize: 11),
-                          ),
-                          const Text(
-                            '💪 Gym Emp:      gym_emp / Emp1234!',
-                            style: TextStyle(fontSize: 11),
-                          ),
-                          const Text(
-                            '🏡 Chalet Admin: chalet_admin / Admin123!',
-                            style: TextStyle(fontSize: 11),
-                          ),
-                          const Text(
-                            '🏡 Chalet Emp:   chalet_emp / Emp1234!',
-                            style: TextStyle(fontSize: 11),
-                          ),
+                          // Text(
+                          //   s('loginDemoLabel'),
+                          //   style: const TextStyle(
+                          //     fontWeight: FontWeight.bold,
+                          //     fontSize: 12,
+                          //   ),
+                          // ),
+                          // const SizedBox(height: 4),
+                          // const Text(
+                          //   '🏊 Pool Admin:   qusai / Admin123!',
+                          //   style: TextStyle(fontSize: 11),
+                          // ),
+                          // const Text(
+                          //   '🏊 Pool Emp:     ali / Ali1234!',
+                          //   style: TextStyle(fontSize: 11),
+                          // ),
+                          // const Text(
+                          //   '💪 Gym Admin:    gym_admin / Admin123!',
+                          //   style: TextStyle(fontSize: 11),
+                          // ),
+                          // const Text(
+                          //   '💪 Gym Emp:      gym_emp / Emp1234!',
+                          //   style: TextStyle(fontSize: 11),
+                          // ),
+                          // const Text(
+                          //   '🏡 Chalet Admin: chalet_admin / Admin123!',
+                          //   style: TextStyle(fontSize: 11),
+                          // ),
+                          // const Text(
+                          //   '🏡 Chalet Emp:   chalet_emp / Emp1234!',
+                          //   style: TextStyle(fontSize: 11),
+                          // ),
                         ],
                       ),
                     ),

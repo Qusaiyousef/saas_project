@@ -42,6 +42,12 @@ class SubscriptionNotifier extends AsyncNotifier<List<dynamic>> {
 
     ref.invalidateSelf();
   }
+
+  Future<void> cancelSubscription(String id) async {
+    final dio = ref.read(dioProvider);
+    await dio.put('/subscriptions/$id/cancel');
+    ref.invalidateSelf();
+  }
 }
 
 final subscriptionProvider = AsyncNotifierProvider<SubscriptionNotifier, List<dynamic>>(() {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/pos_provider.dart';
-import '../providers/pos_provider.dart';
 import '../providers/customers_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/auth_provider.dart';
@@ -32,16 +31,45 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   TimeOfDay _selectedTime = TimeOfDay.now();
   StateSetter? _modalSetState;
   bool _autoPrint = true;
+  bool _useAutoName = false;
+  int _autoCustomerCount = 1;
 
   @override
   void initState() {
     super.initState();
-    _initAutoPrint();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initPrefs();
+    });
   }
 
-  Future<void> _initAutoPrint() async {
+  Future<void> _initPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    if (mounted) _updateState(() => _autoPrint = prefs.getBool('posAutoPrint') ?? true);
+    if (!mounted) return;
+    final isAr = ref.read(isArabicProvider);
+    _updateState(() {
+      _autoPrint = prefs.getBool('posAutoPrint') ?? true;
+      _useAutoName = prefs.getBool('posUseAutoName') ?? false;
+      _autoCustomerCount = prefs.getInt('posAutoCustomerCount') ?? 1;
+      _priceController.text = '10.00';
+      if (_useAutoName && _selectedCustomerId == null) {
+        _nameController.text = isAr ? 'العميل : $_autoCustomerCount' : 'Customer : $_autoCustomerCount';
+      }
+    });
+  }
+
+  Future<void> _toggleAutoName(bool val) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('posUseAutoName', val);
+    if (!mounted) return;
+    final isAr = ref.read(isArabicProvider);
+    _updateState(() {
+      _useAutoName = val;
+      if (val && _selectedCustomerId == null) {
+        _nameController.text = isAr ? 'العميل : $_autoCustomerCount' : 'Customer : $_autoCustomerCount';
+      } else if (!val && _selectedCustomerId == null) {
+        _nameController.clear();
+      }
+    });
   }
 
   Future<void> _toggleAutoPrint(bool val) async {
@@ -76,7 +104,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     if (picked != null) _updateState(() => _selectedTime = picked);
   }
 
-  Future<void> _submitTransaction(bool isAr) async {
+  Future<void> _submitTransaction(bool isAr, {BuildContext? dialogContext}) async {
     if (_formKey.currentState!.validate()) {
       _updateState(() => _isLoading = true);
       try {
@@ -116,6 +144,17 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           customerName = _nameController.text.isEmpty
               ? (AppStrings.t('walkInCustomer', isAr))
               : _nameController.text;
+          
+          if (_useAutoName) {
+            final prefs = await SharedPreferences.getInstance();
+            _autoCustomerCount++;
+            await prefs.setInt('posAutoCustomerCount', _autoCustomerCount);
+            if (mounted) {
+              _updateState(() {
+                _nameController.text = isAr ? 'العميل : $_autoCustomerCount' : 'Customer : $_autoCustomerCount';
+              });
+            }
+          }
         }
 
         await ref
@@ -134,6 +173,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         ref.invalidate(customersProvider);
 
         if (mounted) {
+          final isDesktop = MediaQuery.of(context).size.width > 800;
+          if (!isDesktop && dialogContext != null) {
+            _modalSetState = null;
+            if (dialogContext.mounted) {
+              Navigator.pop(dialogContext);
+            }
+          }
+
           void doPrint() {
             PrintService.printReceipt(
               isAr: isAr,
@@ -180,8 +227,6 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             ),
           );
 
-          _nameController.clear();
-          _priceController.clear();
           _amountPaidController.clear();
           _updateState(() {
             _selectedCustomerId = null;
@@ -190,6 +235,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             _selectedDate = DateTime.now();
             _selectedTime = TimeOfDay.now();
             _selectedPaymentMethod = 'Cash';
+            _priceController.text = '10.00';
+            if (_useAutoName) {
+              _nameController.text = isAr ? 'العميل : $_autoCustomerCount' : 'Customer : $_autoCustomerCount';
+            } else {
+              _nameController.clear();
+            }
           });
         }
       } catch (e) {
@@ -464,28 +515,28 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? colors.secondaryContainer
-                          : colors.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'Walk-in',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: isDark
-                            ? colors.onSecondaryContainer
-                            : colors.onSurface,
-                      ),
-                    ),
-                  ),
+                  // Container(
+                  //   padding: const EdgeInsets.symmetric(
+                  //     horizontal: 8,
+                  //     vertical: 4,
+                  //   ),
+                  //   decoration: BoxDecoration(
+                  //     color: isDark
+                  //         ? colors.secondaryContainer
+                  //         : colors.surfaceContainerHighest,
+                  //     borderRadius: BorderRadius.circular(6),
+                  //   ),
+                    // child: Text(
+                    //   'Walk-in',
+                    //   style: TextStyle(
+                    //     fontSize: 12,
+                    //     fontWeight: FontWeight.bold,
+                    //     color: isDark
+                    //         ? colors.onSecondaryContainer
+                    //         : colors.onSurface,
+                    //   ),
+                    // ),
+                  //),
                   if (isModal) ...[
                     const SizedBox(width: 8),
                     IconButton(
@@ -539,7 +590,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       }),
                     ],
                     onChanged: (val) {
-                      _updateState(() => _selectedCustomerId = val);
+                      _updateState(() {
+                        _selectedCustomerId = val;
+                        if (val != null) {
+                          _nameController.clear();
+                        } else if (_useAutoName) {
+                          _nameController.text = isAr ? 'العميل : $_autoCustomerCount' : 'Customer : $_autoCustomerCount';
+                        }
+                      });
                     },
                   ),
                 ),
@@ -554,6 +612,17 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
           if (_selectedCustomerId == null) ...[
             const SizedBox(height: 16),
+            SwitchListTile(
+              title: Text(
+                isAr ? 'ترقيم العملاء تلقائياً (العميل : 1...)' : 'Auto-number Customers',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              value: _useAutoName,
+              activeColor: colors.primary,
+              onChanged: _toggleAutoName,
+              contentPadding: EdgeInsets.zero,
+            ),
+            const SizedBox(height: 8),
             TextFormField(
               controller: _nameController,
               decoration: InputDecoration(
@@ -661,6 +730,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             controller: _priceController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textInputAction: TextInputAction.next,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) return isAr ? 'الرجاء إدخال السعر' : 'Please enter price';
+              if (double.tryParse(value) == null) return isAr ? 'رقم غير صالح' : 'Invalid number';
+              return null;
+            },
             decoration: InputDecoration(
               labelText: s('totalPrice'),
               prefixIcon: const Icon(Icons.attach_money),
@@ -677,6 +751,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _submitTransaction(isAr),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) return isAr ? 'الرجاء إدخال المبلغ المدفوع' : 'Please enter amount paid';
+              if (double.tryParse(value) == null) return isAr ? 'رقم غير صالح' : 'Invalid number';
+              return null;
+            },
             decoration: InputDecoration(
               labelText: s('amountPaidNow'),
               prefixIcon: const Icon(Icons.money),
@@ -720,9 +799,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             onPressed: _isLoading
                 ? null
                 : () {
-                    final isDesktop = MediaQuery.of(context).size.width > 800;
-                    if (!isDesktop) Navigator.pop(context); // Close sheet
-                    _submitTransaction(isAr);
+                    _submitTransaction(isAr, dialogContext: context);
                   },
             icon: _isLoading
                 ? const SizedBox(
@@ -764,6 +841,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         final startOfToday = DateTime(now.year, now.month, now.day);
         
         final filtered = bookings.where((b) {
+          if (b['status'] == 1) return false; // Hide Cancelled
           final dt = DateTime.parse(b['startTime']).toLocal();
           // Keep if it's today or in the future
           return dt.isAfter(startOfToday.subtract(const Duration(seconds: 1)));
@@ -897,6 +975,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              const Spacer(),
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
@@ -939,6 +1018,80 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                   ),
                                 ),
                               ),
+                              if (!isCompleted) ...[
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: Icon(Icons.cancel, size: 20, color: Theme.of(context).colorScheme.error),
+                                  tooltip: isAr ? 'إلغاء الحجز' : 'Cancel Booking',
+                                  constraints: const BoxConstraints(),
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () async {
+                                    double feePercentage = 0.0;
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (ctx) => StatefulBuilder(
+                                        builder: (ctx, setStateDialog) => AlertDialog(
+                                          title: Text(isAr ? 'إلغاء الحجز' : 'Cancel Booking'),
+                                          content: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(isAr ? 'هل تريد فرض رسوم إلغاء على العميل؟ سيتم خصم هذه النسبة من المبلغ المدفوع كأرباح.' : 'Do you want to apply a cancellation fee? This percentage will be deducted from the paid amount as revenue.'),
+                                              const SizedBox(height: 16),
+                                              Wrap(
+                                                spacing: 8,
+                                                runSpacing: 8,
+                                                alignment: WrapAlignment.center,
+                                                children: [0.0, 10.0, 20.0, 30.0, 50.0].map((fee) {
+                                                  final isSelected = feePercentage == fee;
+                                                  return ChoiceChip(
+                                                    label: Text(fee == 0 ? (isAr ? 'بدون خصم' : 'No Fee') : '${fee.toInt()}%'),
+                                                    selected: isSelected,
+                                                    onSelected: (selected) {
+                                                      if (selected) setStateDialog(() => feePercentage = fee);
+                                                    },
+                                                    selectedColor: Theme.of(context).colorScheme.errorContainer,
+                                                  );
+                                                }).toList(),
+                                              )
+                                            ],
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(ctx, false),
+                                              child: Text(AppStrings.t('cancel', isAr)),
+                                            ),
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Theme.of(context).colorScheme.error,
+                                                foregroundColor: Theme.of(context).colorScheme.onError,
+                                              ),
+                                              onPressed: () => Navigator.pop(ctx, true),
+                                              child: Text(isAr ? 'تأكيد الإلغاء' : 'Confirm Cancel'),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                    
+                                    if (confirm == true) {
+                                      try {
+                                        await ref.read(bookingsProvider.notifier).cancelBooking(b['id'], feePercentage);
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text(isAr ? 'تم إلغاء الحجز بنجاح' : 'Booking cancelled successfully')),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Error: $e'), backgroundColor: Theme.of(context).colorScheme.error),
+                                          );
+                                        }
+                                      }
+                                    }
+                                  },
+                                ),
+                              ],
                             ],
                           ),
                           const SizedBox(height: 8),

@@ -44,7 +44,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Subscription>().Property(s => s.AmountPaid).HasColumnType("decimal(18,2)");
         builder.Entity<Subscription>().Property(s => s.TotalAmount).HasColumnType("decimal(18,2)");
 
-        builder.Entity<Customer>().HasQueryFilter(e => e.TenantId == _tenantProvider.GetTenantId());
+        builder.Entity<Customer>().HasQueryFilter(e => e.TenantId == _tenantProvider.GetTenantId() && !e.IsDeleted);
         
         builder.Entity<PaymentRecord>().HasQueryFilter(e => e.TenantId == _tenantProvider.GetTenantId());
         builder.Entity<PaymentRecord>().Property(p => p.Amount).HasColumnType("decimal(18,2)");

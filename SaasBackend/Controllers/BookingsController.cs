@@ -62,4 +62,27 @@ public class BookingsController : ControllerBase
         var bookings = await _bookingService.GetBookingsForResourceAsync(resourceId, from, to);
         return Ok(bookings);
     }
+
+    [HttpPut("{id}/cancel")]
+    public async Task<IActionResult> CancelBooking(Guid id, [FromQuery] decimal feePercentage = 0)
+    {
+        try
+        {
+            var cancelled = await _bookingService.CancelBookingAsync(id, feePercentage);
+            if (cancelled == null) return NotFound(new { message = "Booking not found." });
+
+            var tenantId = _tenantProvider.GetTenantId();
+            if (tenantId.HasValue)
+            {
+                _cache.Remove($"FinanceSummary_{tenantId.Value}");
+                _cache.Remove($"FinanceTransactions_{tenantId.Value}");
+            }
+
+            return Ok(new { message = "Booking cancelled successfully." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Error cancelling booking: {ex.Message}" });
+        }
+    }
 }

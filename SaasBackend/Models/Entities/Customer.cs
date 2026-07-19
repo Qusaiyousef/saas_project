@@ -18,7 +18,12 @@ public class Customer : ITenantEntity
     [MaxLength(20)]
     public string? Phone { get; set; }
     
+    [MaxLength(100)]
+    public string? FingerprintId { get; set; }
+    
     public DateTime? DateOfBirth { get; set; }
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    public bool IsDeleted { get; set; } = false;
 }

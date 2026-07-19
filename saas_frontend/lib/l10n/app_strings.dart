@@ -339,6 +339,60 @@ class AppStrings {
     'receiptTitlePos': {'en': 'POS Receipt', 'ar': 'فاتورة مبيعات'},
     'receiptTitleSub': {'en': 'Subscription Receipt', 'ar': 'فاتورة اشتراك'},
 
+    // ── Check-In ──────────────────────────────────────────────────────────────
+    'navCheckin': {'en': 'Check-In', 'ar': 'تسجيل الدخول'},
+    'checkinTitle': {'en': 'Member Check-In', 'ar': 'فحص عضوية الأعضاء'},
+    'checkinSubtitle': {
+      'en': 'Verify membership before entry',
+      'ar': 'تحقق من الاشتراك قبل الدخول',
+    },
+    'checkinByPhone': {'en': 'Search by Phone', 'ar': 'البحث برقم الهاتف'},
+    'checkinPhoneHint': {'en': 'Enter phone number', 'ar': 'أدخل رقم الهاتف'},
+    'checkinByFingerprint': {'en': 'External Scanner', 'ar': 'جهاز البصمة الخارجي'},
+    'checkinFingerprintHint': {
+      'en': 'Place finger on scanner, code will appear here',
+      'ar': 'ضع الإصبع على الجهاز، سيظهر الكود هنا',
+    },
+    'checkinBiometric': {'en': 'Phone Fingerprint', 'ar': 'بصمة الهاتف'},
+    'checkinBiometricHint': {
+      'en': 'Use the phone\'s built-in fingerprint sensor',
+      'ar': 'استخدم مستشعر البصمة المدمج في الهاتف',
+    },
+    'checkinSearch': {'en': 'Search', 'ar': 'بحث'},
+    'checkinClear': {'en': 'Clear', 'ar': 'مسح'},
+    'checkinNotFound': {'en': 'No member found', 'ar': 'لم يُعثر على عضو'},
+    'checkinNoSub': {
+      'en': 'No active subscription',
+      'ar': 'لا يوجد اشتراك نشط',
+    },
+    'checkinWelcome': {'en': 'Welcome!', 'ar': 'أهلاً وسهلاً!'},
+    'checkinExpired': {'en': 'Subscription Expired', 'ar': 'انتهى الاشتراك'},
+    'checkinPendingPayment': {'en': 'Pending Payment', 'ar': 'يوجد رصيد متبقي'},
+    'checkinDaysLeft': {'en': 'Days Remaining', 'ar': 'الأيام المتبقية'},
+    'checkinEndDate': {'en': 'Expiry Date', 'ar': 'تاريخ الانتهاء'},
+    'checkinAmountPaid': {'en': 'Amount Paid', 'ar': 'المبلغ المدفوع'},
+    'checkinBalance': {'en': 'Balance Due', 'ar': 'المبلغ المتبقي'},
+    'checkinTotal': {'en': 'Total Amount', 'ar': 'إجمالي المبلغ'},
+    'checkinBiometricNotAvail': {
+      'en': 'Biometric not available on this device',
+      'ar': 'البصمة الحيوية غير متاحة على هذا الجهاز',
+    },
+    'checkinBiometricSuccess': {'en': 'Identity verified!', 'ar': 'تم التحقق من الهوية!'},
+    'checkinBiometricFailed': {'en': 'Biometric failed', 'ar': 'فشل التحقق بالبصمة'},
+    'checkinEnterPhone': {
+      'en': 'Please enter the phone number to continue',
+      'ar': 'أدخل رقم الهاتف للمتابعة',
+    },
+    'checkinLinkFingerprint': {
+      'en': 'Link fingerprint to this member',
+      'ar': 'ربط البصمة بهذا العضو',
+    },
+    'checkinFingerprintLinked': {
+      'en': 'Fingerprint ID linked successfully!',
+      'ar': 'تم ربط البصمة بنجاح!',
+    },
+    'checkinScannerMode': {'en': 'External Device Mode', 'ar': 'وضع الجهاز الخارجي'},
+
   };
 
   static String t(String key, bool isAr) {
