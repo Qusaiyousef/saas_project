@@ -38,6 +38,18 @@ class AppStrings {
     'loginPassword': {'en': 'Password', 'ar': 'كلمة المرور'},
     'loginButton': {'en': 'Login', 'ar': 'دخول'},
     'loginDemoLabel': {'en': 'Demo Accounts:', 'ar': 'حسابات تجريبية:'},
+    
+    // ── Server Setup ──────────────────────────────────────────────────────────
+    'serverSetup': {'en': 'Server Setup', 'ar': 'إعداد السيرفر'},
+    'enterServerCode': {
+      'en': 'Enter Server Code (Base64)',
+      'ar': 'أدخل كود السيرفر (Base64)',
+    },
+    'invalidCode': {'en': 'Invalid code format', 'ar': 'صيغة الكود غير صحيحة'},
+    'serverUpdated': {
+      'en': 'Server URL updated successfully!',
+      'ar': 'تم تحديث رابط السيرفر بنجاح!',
+    },
 
     // ── Dashboard ─────────────────────────────────────────────────────────────
     'dashTitle': {'en': 'Dashboard', 'ar': 'لوحة التحكم'},

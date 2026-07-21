@@ -7,13 +7,35 @@ import '../models/tenant_type.dart';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-// === إعدادات الرابط (API Configuration) ===
-
-//const String API_BASE_URL = 'http://localhost:5286/api';
-
-// لرفع الموقع على الإنترنت والموبايل :
-final String API_BASE_URL = kIsWeb ? '/api' : 'http://qusaiali-001-site1.ktempurl.com/api';
+// === إعدادات الرابط الافتراضي ===
+final String DEFAULT_API_URL = kIsWeb ? '/api' : 'http://qusaiali-001-site1.ktempurl.com/api';
 // =========================================
+
+class ApiUrlNotifier extends Notifier<String> {
+  @override
+  String build() {
+    _loadFromPrefs();
+    return DEFAULT_API_URL;
+  }
+
+  Future<void> _loadFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedUrl = prefs.getString('custom_api_url');
+    if (savedUrl != null && savedUrl.isNotEmpty) {
+      state = savedUrl;
+    }
+  }
+
+  Future<void> updateUrl(String newUrl) async {
+    state = newUrl;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('custom_api_url', newUrl);
+  }
+}
+
+final apiUrlProvider = NotifierProvider<ApiUrlNotifier, String>(() {
+  return ApiUrlNotifier();
+});
 
 class AuthState {
   final bool isAuthenticated;
@@ -56,10 +78,12 @@ class AuthState {
 }
 
 class AuthNotifier extends Notifier<AuthState> {
-  final Dio _dio = Dio(BaseOptions(baseUrl: API_BASE_URL));
+  late Dio _dio;
 
   @override
   AuthState build() {
+    final apiUrl = ref.watch(apiUrlProvider);
+    _dio = Dio(BaseOptions(baseUrl: apiUrl));
     _loadToken();
     return AuthState();
   }
@@ -194,7 +218,8 @@ final authProvider = NotifierProvider<AuthNotifier, AuthState>(() {
 // Provide a global Dio instance that injects the JWT token
 final dioProvider = Provider<Dio>((ref) {
   final authState = ref.watch(authProvider);
-  final dio = Dio(BaseOptions(baseUrl: API_BASE_URL));
+  final apiUrl = ref.watch(apiUrlProvider);
+  final dio = Dio(BaseOptions(baseUrl: apiUrl));
   
   if (authState.token != null) {
     dio.interceptors.add(InterceptorsWrapper(

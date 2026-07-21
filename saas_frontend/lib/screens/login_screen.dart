@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import '../widgets/app_drawer.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,64 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController(text: "qusai");
   final _passwordController = TextEditingController(text: "Admin123!");
   bool _obscurePassword = true;
+
+  void _showServerSetupDialog() {
+    final s = (String key) => AppStrings.t(key, ref.read(isArabicProvider));
+    final controller = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(s('serverSetup')),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              labelText: s('enterServerCode'),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(s('cancel')),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  final code = controller.text.trim();
+                  if (code.isEmpty) return;
+                  
+                  final decodedUrl = utf8.decode(base64Decode(code));
+                  if (!decodedUrl.startsWith('http')) throw Exception('Invalid');
+                  
+                  await ref.read(apiUrlProvider.notifier).updateUrl(decodedUrl);
+                  
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(s('serverUpdated')),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(s('invalidCode')),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  );
+                }
+              },
+              child: Text(s('save')),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,36 +123,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Language toggle at top
-                    Align(
-                      alignment: isAr
-                          ? Alignment.centerLeft
-                          : Alignment.centerRight,
-                      child: InkWell(
-                        onTap: () => ref.read(localeProvider.notifier).toggle(),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
+                    // Server setup & Language toggle at top
+                    Row(
+                      mainAxisAlignment: isAr
+                          ? MainAxisAlignment.start
+                          : MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.dns_rounded),
+                          tooltip: s('serverSetup'),
+                          onPressed: _showServerSetupDialog,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () => ref.read(localeProvider.notifier).toggle(),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
                             ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            s('language'),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              s('language'),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                     const SizedBox(height: 16),
 
