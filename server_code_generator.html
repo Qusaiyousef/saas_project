@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مولد أكواد السيرفر - Server Code Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --card-border: rgba(99, 102, 241, 0.2);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent: #10b981;
+      --text: #f8fafc;
+      --text-secondary: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Tajawal', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 650px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .section {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 15px;
+      direction: ltr;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    }
+
+    .presets {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-preset {
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-preset:hover {
+      background: rgba(99, 102, 241, 0.3);
+      color: #fff;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--primary) 0%, #4338ca 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+    }
+
+    .output-box {
+      margin-top: 16px;
+      padding: 14px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 12px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .output-box.active {
+      display: flex;
+    }
+
+    .output-text {
+      font-family: monospace;
+      font-size: 14px;
+      color: #6ee7b7;
+      word-break: break-all;
+      direction: ltr;
+      text-align: left;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .btn-copy {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #022c22;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-copy:hover {
+      background: #34d399;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>🔐 مولد أكواد السيرفر الخاصة</h1>
+      <p>أداة الإدارة لتشفير وفك تشفير روابط الـ API الخاصة بالعملاء</p>
+    </div>
+
+    <!-- قسم التشفير -->
+    <div class="section">
+      <div class="section-title">
+        ⚡ 1. تشفير رابط API إلى كود سيرفر (Encode)
+      </div>
+
+      <div class="presets">
+        <button class="btn-preset" onclick="setPreset('http://localhost:5286/api')">📍 سيرفر محلي (Localhost)</button>
+        <button class="btn-preset" onclick="setPreset('http://qusaiali-001-site1.ktempurl.com/api')">🌐 السيرفر المرفوع (Production)</button>
+      </div>
+
+      <div class="input-group">
+        <label for="apiUrlInput">رابط الـ API الحقيقي:</label>
+        <input type="text" id="apiUrlInput" placeholder="https://example.com/api">
+      </div>
+
+      <button class="btn-primary" onclick="generateCode()">توليد كود السيرفر 🔑</button>
+
+      <div class="output-box" id="encodeOutput">
+        <label>الكود الناتج (أرسل هذا الكود للعميل):</label>
+        <div class="output-text" id="encodedResult"></div>
+        <button class="btn-copy" onclick="copyText('encodedResult', this)">نسخ الكود 📋</button>
+      </div>
+    </div>
+
+    <!-- قسم فك التشفير -->
+    <div class="section">
+      <div class="section-title">
+        🔍 2. فك تشفير كود سيرفر لمعرفة الرابط (Decode)
+      </div>
+
+      <div class="input-group">
+        <label for="codeInput">كود السيرفر (Base64):</label>
+        <input type="text" id="codeInput" placeholder="ضع الكود المشفر هنا...">
+      </div>
+
+      <button class="btn-primary" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);" onclick="decodeCode()">معاينة الرابط الأصلي 🌐</button>
+
+      <div class="output-box" id="decodeOutput" style="background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.3);">
+        <label>الرابط الأصلي المخفي داخل الكود:</label>
+        <div class="output-text" id="decodedResult" style="color: #7dd3fc;"></div>
+        <button class="btn-copy" style="background: #38bdf8; color: #0c4a6e;" onclick="copyText('decodedResult', this)">نسخ الرابط 📋</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      تطبيق SaaS Portal - أداة إدارية محلية 100% لا تحتاج لإنترنت
+    </div>
+  </div>
+
+  <script>
+    function setPreset(url) {
+      document.getElementById('apiUrlInput').value = url;
+    }
+
+    function generateCode() {
+      const url = document.getElementById('apiUrlInput').value.trim();
+      if (!url) {
+        alert('يرجى إدخال الرابط أولاً!');
+        return;
+      }
+      try {
+        const encoded = btoa(unescape(encodeURIComponent(url)));
+        document.getElementById('encodedResult').innerText = encoded;
+        document.getElementById('encodeOutput').classList.add('active');
+      } catch (e) {
+        alert('حدث خطأ أثناء التشفير!');
+      }
+    }
+
+    function decodeCode() {
+      const code = document.getElementById('codeInput').value.trim();
+      if (!code) {
+        alert('يرجى إدخال الكود أولاً!');
+        return;
+      }
+      try {
+        const decoded = decodeURIComponent(escape(atob(code)));
+        document.getElementById('decodedResult').innerText = decoded;
+        document.getElementById('decodeOutput').classList.add('active');
+      } catch (e) {
+        alert('الكود المدخل غير صالح!');
+      }
+    }
+
+    function copyText(elementId, btn) {
+      const text = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const oldText = btn.innerText;
+        btn.innerText = 'تم النسخ! ✓';
+        btn.style.opacity = '0.8';
+        setTimeout(() => {
+          btn.innerText = oldText;
+          btn.style.opacity = '1';
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
