@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 // === إعدادات الرابط الافتراضي ===
 final String DEFAULT_API_URL = kIsWeb ? '/api' : 'http://qusaiali-001-site1.ktempurl.com/api';
 // =========================================
-
+//final String DEFAULT_API_URL = 'http://localhost:5286/api'; // Default API URL for local development
 class ApiUrlNotifier extends Notifier<String> {
   @override
   String build() {
@@ -133,7 +133,8 @@ class AuthNotifier extends Notifier<AuthState> {
       final authState = state;
       if (authState.token == null) return;
       
-      final dio = Dio(BaseOptions(baseUrl: API_BASE_URL));
+      final apiUrl = ref.read(apiUrlProvider);
+      final dio = Dio(BaseOptions(baseUrl: apiUrl));
       dio.interceptors.add(InterceptorsWrapper(
         onRequest: (options, handler) {
           options.headers['Authorization'] = 'Bearer ${authState.token}';
