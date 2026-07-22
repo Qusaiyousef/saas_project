@@ -46,7 +46,17 @@ public class CustomersController : ControllerBase
     public async Task<IActionResult> CreateCustomer([FromBody] Customer input)
     {
         if (string.IsNullOrWhiteSpace(input.Name))
-            return BadRequest(new { message = "Customer name is required." });
+            return BadRequest(new { message = "اسم العميل مطلوب." });
+
+        if (string.IsNullOrWhiteSpace(input.Phone))
+            return BadRequest(new { message = "رقم الهاتف مطلوب." });
+
+        var phone = input.Phone.Trim();
+        if (!System.Text.RegularExpressions.Regex.IsMatch(phone, @"^(77|78|73|71)\d{7}$"))
+            return BadRequest(new { message = "رقم الهاتف يجب أن يتكون من 9 أرقام ويبدأ بـ (77, 78, 73, 71)." });
+
+        if (!input.DateOfBirth.HasValue)
+            return BadRequest(new { message = "تاريخ الميلاد مطلوب." });
 
         var customer = new Customer
         {

@@ -1171,6 +1171,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 TextField(
                   controller: phoneController,
                   keyboardType: TextInputType.phone,
+                  maxLength: 9,
                   decoration: InputDecoration(
                     labelText: AppStrings.t('customerPhone', isAr),
                     border: const OutlineInputBorder(),
@@ -1215,14 +1216,57 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 onPressed: isLoading
                     ? null
                     : () async {
-                        if (nameController.text.trim().isEmpty) return;
+                        final name = nameController.text.trim();
+                        final phone = phoneController.text.trim();
+
+                        if (name.isEmpty) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text(AppStrings.t('valNameRequired', isAr)),
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (phone.isEmpty) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text(AppStrings.t('valPhoneRequired', isAr)),
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final yemenPhoneRegex = RegExp(r'^(77|78|73|71)\d{7}$');
+                        if (!yemenPhoneRegex.hasMatch(phone)) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text(AppStrings.t('valPhoneInvalidYemen', isAr)),
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (selectedDob == null) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text(AppStrings.t('valDobRequired', isAr)),
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                          );
+                          return;
+                        }
+
                         setState(() => isLoading = true);
                         try {
                           await ref
                               .read(customersProvider.notifier)
                               .addCustomer(
-                                nameController.text.trim(),
-                                phoneController.text.trim(),
+                                name,
+                                phone,
                                 selectedDob,
                               );
                           ref.invalidate(customersProvider);
@@ -1231,7 +1275,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           setState(() => isLoading = false);
                           ScaffoldMessenger.of(
                             ctx,
-                          ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                          ).showSnackBar(SnackBar(content: Text('$e')));
                         }
                       },
                 child: isLoading
