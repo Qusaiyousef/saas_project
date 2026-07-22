@@ -267,6 +267,9 @@ class AppStrings {
     'valPhoneRequired': {'en': 'Phone number is required', 'ar': 'يرجى إدخال رقم الهاتف'},
     'valPhoneInvalidYemen': {'en': 'Phone must be 9 digits starting with 77, 78, 73, or 71', 'ar': 'رقم الهاتف يجب أن يتكون من 9 أرقام ويبدأ بـ (77, 78, 73, 71)'},
     'valDobRequired':   {'en': 'Date of birth is required', 'ar': 'يرجى اختيار تاريخ الميلاد'},
+    'valAmountPaidRequired': {'en': 'Please enter the amount paid', 'ar': 'يرجى إدخال المبلغ المدفوع'},
+    'valAmountPaidExceedsTotal': {'en': 'Amount paid cannot exceed total amount', 'ar': 'المبلغ المدفوع يجب أن لا يتجاوز المبلغ الإجمالي'},
+    'errorInvalidAmount': {'en': 'Invalid amount entered', 'ar': 'المبلغ المدفوع غير صالح'},
     'customerNoData':   {'en': 'No customers yet.', 'ar': 'لا يوجد عملاء بعد.'},
     'customerDeleteWarning': {'en': 'Are you sure you want to delete this customer? All their records will be affected.', 'ar': 'هل أنت متأكد من حذف هذا العميل؟ ستتأثر جميع سجلاته.'},
     // ── Missing Translations ──────────────────────────────────────────────────

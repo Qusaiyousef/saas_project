@@ -232,22 +232,58 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                 onPressed: loading
                     ? null
                     : () async {
-                        if (selectedCustomerId == null) return;
+                        if (selectedCustomerId == null) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text(AppStrings.t('pleaseSelectCustomer', isAr)),
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final paidText = amountPaidController.text.trim();
+                        if (paidText.isEmpty) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text(AppStrings.t('valAmountPaidRequired', isAr)),
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final amountPaid = double.tryParse(paidText);
+                        if (amountPaid == null || amountPaid < 0) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text(AppStrings.t('errorInvalidAmount', isAr)),
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final months = _planToMonths(selectedPlan);
+                        final priceStr = _planPrice(selectedPlan).replaceAll('\$', '');
+                        final totalAmount = double.tryParse(priceStr) ?? 0.0;
+
+                        if (amountPaid > totalAmount) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text(AppStrings.t('valAmountPaidExceedsTotal', isAr)),
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                          );
+                          return;
+                        }
+
                         setState(() => loading = true);
                         try {
                           String finalCustId = selectedCustomerId!;
                           String customerName = customers.firstWhere(
                             (c) => c['id'] == finalCustId,
                           )['name'];
-
-                          final months = _planToMonths(selectedPlan);
-                          final priceStr = _planPrice(
-                            selectedPlan,
-                          ).replaceAll('\$', '');
-                          final totalAmount = double.tryParse(priceStr) ?? 0.0;
-                          final amountPaid =
-                              double.tryParse(amountPaidController.text) ??
-                              totalAmount;
 
                           await ref
                               .read(subscriptionProvider.notifier)

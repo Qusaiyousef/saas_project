@@ -21,6 +21,14 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   int? _sortColumnIndex = 0; // Default to Date
   bool _sortAscending = false; // Newest first
   
+  bool _matchesFilterType(dynamic t) {
+    if (_filterType == 'All') return true;
+    final typeStr = t['type']?.toString() ?? '';
+    if (_filterType == 'Bookings' && (typeStr == 'Booking' || typeStr == 'Bookings')) return true;
+    if (_filterType == 'Subscriptions' && (typeStr == 'Subscription' || typeStr == 'Subscriptions')) return true;
+    return typeStr == _filterType;
+  }
+  
   String _dateRangePreset = 'All Time'; // All Time, Today, This Week, This Month, Custom
   DateTime? _startDate;
   DateTime? _endDate;
@@ -157,7 +165,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                     for (var t in allTx) {
                       final matchesSearch = (t['customerName']?.toString().toLowerCase().contains(_searchQuery) ?? false) ||
                                             (t['type']?.toString().toLowerCase().contains(_searchQuery) ?? false);
-                      final matchesType = _filterType == 'All' || t['type'] == _filterType;
+                      final matchesType = _matchesFilterType(t);
                       bool matchesDate = true;
                       if (_startDate != null && _endDate != null) {
                         final dt = DateTime.parse(t['date']).toLocal();
@@ -411,7 +419,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                               final filtered = transactions.where((t) {
                                 final matchesSearch = (t['customerName']?.toString().toLowerCase().contains(_searchQuery) ?? false) ||
                                                       (t['type']?.toString().toLowerCase().contains(_searchQuery) ?? false);
-                                final matchesType = _filterType == 'All' || t['type'] == _filterType;
+                                final matchesType = _matchesFilterType(t);
                                 
                                 bool matchesDate = true;
                                 if (_startDate != null && _endDate != null) {
@@ -905,7 +913,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     final filteredTx = allTx.where((t) {
       final matchesSearch = (t['customerName']?.toString().toLowerCase().contains(_searchQuery) ?? false) ||
                             (t['type']?.toString().toLowerCase().contains(_searchQuery) ?? false);
-      final matchesType = _filterType == 'All' || t['type'] == _filterType;
+      final matchesType = _matchesFilterType(t);
       
       bool matchesDate = true;
       if (_startDate != null && _endDate != null) {
