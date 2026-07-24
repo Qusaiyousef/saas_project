@@ -38,7 +38,7 @@ class AppStrings {
     'loginPassword': {'en': 'Password', 'ar': 'كلمة المرور'},
     'loginButton': {'en': 'Login', 'ar': 'دخول'},
     'loginDemoLabel': {'en': 'Demo Accounts:', 'ar': 'حسابات تجريبية:'},
-    
+
     // ── Server Setup ──────────────────────────────────────────────────────────
     'serverSetup': {'en': 'Server Setup', 'ar': 'إعداد السيرفر'},
     'enterServerCode': {
@@ -53,6 +53,7 @@ class AppStrings {
 
     // ── Dashboard ─────────────────────────────────────────────────────────────
     'dashTitle': {'en': 'Dashboard', 'ar': 'لوحة التحكم'},
+    'dashNewBooking': {'en': 'New Booking', 'ar': 'حجز جديد'},
     'dashTotalBookings': {'en': 'Total Bookings', 'ar': 'إجمالي الحجوزات'},
     'dashTodayBookings': {'en': "Today's Bookings", 'ar': 'حجوزات اليوم'},
     'dashTotalRevenue': {'en': 'Total Revenue', 'ar': 'إجمالي الإيرادات'},
@@ -85,7 +86,7 @@ class AppStrings {
 
     // ── POS ───────────────────────────────────────────────────────────────────
     'posTitle': {'en': 'Quick POS Entry', 'ar': 'إدخال سريع - نقطة البيع'},
-    'posCustomer': {'en':'Customer','ar':'عميل'},
+    'posCustomer': {'en': 'Customer', 'ar': 'عميل'},
     'posNewBooking': {
       'en': 'New Booking / Walk-in',
       'ar': 'حجز جديد / زيارة مباشرة',
@@ -94,10 +95,7 @@ class AppStrings {
       'en': 'Customer Name (optional)',
       'ar': 'اسم العميل (اختياري)',
     },
-    'SelectCustomer': {
-      'en': 'Select Customer...',
-      'ar': '...بحث عن عميل',
-    },
+    'SelectCustomer': {'en': 'Select Customer...', 'ar': '...بحث عن عميل'},
     'posDate': {'en': 'Date:', 'ar': 'التاريخ:'},
     'posChangeDate': {
       'en': 'Tap to change date (pre-booking)',
@@ -121,8 +119,8 @@ class AppStrings {
     'posToday': {'en': 'Today', 'ar': 'اليوم'},
     'posTomorrow': {'en': 'Tomorrow', 'ar': 'غداً'},
     'posBookingSuccess': {
-      'en': '✅ Booking recorded successfully',
-      'ar': '✅ تم تسجيل الحجز بنجاح',
+      'en': 'Booking recorded successfully',
+      'ar': 'تم تسجيل الحجز بنجاح',
     },
     'posBookingFailed': {'en': 'Booking Failed', 'ar': 'فشل الحجز'},
 
@@ -138,14 +136,8 @@ class AppStrings {
     'subActive': {'en': 'Active', 'ar': 'فعّال'},
     'subExpired': {'en': 'Expired', 'ar': 'منتهي'},
     'subNoSubs': {'en': 'No subscriptions yet', 'ar': 'لا توجد اشتراكات بعد'},
-    'subSuccessAdd': {
-      'en': '✅ Subscription added',
-      'ar': '✅ تم إضافة الاشتراك',
-    },
-    'subSuccessDelete': {
-      'en': '✅ Subscription deleted',
-      'ar': '✅ تم حذف الاشتراك',
-    },
+    'subSuccessAdd': {'en': 'Subscription added', 'ar': 'تم إضافة الاشتراك'},
+    'subSuccessDelete': {'en': 'Subscription deleted', 'ar': 'تم حذف الاشتراك'},
 
     // ── Users ─────────────────────────────────────────────────────────────────
     'usersTitle': {'en': 'User Management', 'ar': 'إدارة المستخدمين'},
@@ -178,14 +170,14 @@ class AppStrings {
       'ar': 'تحذير: هذا المستخدم مدير. لا يمكنك حذف نفسك أو آخر مدير.',
     },
     'usersCreated': {
-      'en': '✅ User created successfully',
-      'ar': '✅ تم إنشاء المستخدم بنجاح',
+      'en': 'User created successfully',
+      'ar': 'تم إنشاء المستخدم بنجاح',
     },
     'usersUpdated': {
-      'en': '✅ User updated successfully',
-      'ar': '✅ تم تحديث المستخدم بنجاح',
+      'en': 'User updated successfully',
+      'ar': 'تم تحديث المستخدم بنجاح',
     },
-    'usersDeleted': {'en': '✅ User deleted', 'ar': '✅ تم حذف المستخدم'},
+    'usersDeleted': {'en': 'User deleted', 'ar': 'تم حذف المستخدم'},
     'usersCannotUndo': {
       'en': 'This action cannot be undone.',
       'ar': 'لا يمكن التراجع عن هذا الإجراء.',
@@ -197,26 +189,31 @@ class AppStrings {
       'ar': 'هل أنت متأكد من حذف',
     },
     'usersPagePermissions': {'en': 'Page Permissions', 'ar': 'صلاحيات الصفحات'},
-    'usersWarningUsersPageTitle': {'en': 'Grant Users Access?', 'ar': 'منح صلاحية إدارة المستخدمين؟'},
+    'usersWarningUsersPageTitle': {
+      'en': 'Grant Users Access?',
+      'ar': 'منح صلاحية إدارة المستخدمين؟',
+    },
     'usersWarningUsersPageDesc': {
-      'en': 'Are you sure you want to grant this user access to the Users page? They will be able to manage other employees.',
-      'ar': 'هل أنت متأكد من منح هذا المستخدم صلاحية الدخول لصفحة المستخدمين؟ سيتمكن من إدارة حسابات الموظفين الآخرين.'
+      'en':
+          'Are you sure you want to grant this user access to the Users page? They will be able to manage other employees.',
+      'ar':
+          'هل أنت متأكد من منح هذا المستخدم صلاحية الدخول لصفحة المستخدمين؟ سيتمكن من إدارة حسابات الموظفين الآخرين.',
     },
     'errorModifyAdmin': {
       'en': 'You do not have permission to modify an Admin account.',
-      'ar': 'ليس لديك صلاحية لتعديل حساب مدير.'
+      'ar': 'ليس لديك صلاحية لتعديل حساب مدير.',
     },
     'errorModifyPermissions': {
       'en': 'You do not have permission to modify user permissions.',
-      'ar': 'ليس لديك صلاحية لتعديل صلاحيات المستخدمين.'
+      'ar': 'ليس لديك صلاحية لتعديل صلاحيات المستخدمين.',
     },
     'errorDeleteUsers': {
       'en': 'You do not have permission to delete users.',
-      'ar': 'ليس لديك صلاحية لحذف المستخدمين.'
+      'ar': 'ليس لديك صلاحية لحذف المستخدمين.',
     },
     'errorCreateUsers': {
       'en': 'You do not have permission to create users.',
-      'ar': 'ليس لديك صلاحية لإنشاء مستخدمين.'
+      'ar': 'ليس لديك صلاحية لإنشاء مستخدمين.',
     },
 
     // ── Finance ───────────────────────────────────────────────────────────────
@@ -249,54 +246,104 @@ class AppStrings {
     'navSettings': {'en': 'Settings', 'ar': 'الإعدادات'},
     'settingsTitle': {'en': 'Settings', 'ar': 'الإعدادات'},
     'settingsLanguage': {'en': 'Language', 'ar': 'اللغة'},
-    'settingsTheme':    {'en': 'Theme', 'ar': 'المظهر'},
-    'settingsDark':     {'en': 'Dark Mode', 'ar': 'الوضع الداكن'},
-    'settingsLight':    {'en': 'Light Mode', 'ar': 'الوضع الفاتح'},
+    'settingsTheme': {'en': 'Theme', 'ar': 'المظهر'},
+    'settingsDark': {'en': 'Dark Mode', 'ar': 'الوضع الداكن'},
+    'settingsLight': {'en': 'Light Mode', 'ar': 'الوضع الفاتح'},
 
     // ── Customers ─────────────────────────────────────────────────────────────
-    'navCustomers':     {'en': 'Customers', 'ar': 'العملاء'},
-    'customersTitle':   {'en': 'Customers Management', 'ar': 'إدارة العملاء'},
-    'customerName':     {'en': 'Name', 'ar': 'الاسم'},
-    'customerPhone':    {'en': 'Phone', 'ar': 'رقم الهاتف'},
-    'customerAge':      {'en': 'Age', 'ar': 'العمر'},
-    'customerDOB':      {'en': 'Date of Birth', 'ar': 'تاريخ الميلاد'},
-    'customerBalance':  {'en': 'Remaining Balance', 'ar': 'الرصيد المتبقي'},
-    'customerTotalPaid':{'en': 'Total Paid', 'ar': 'إجمالي المدفوعات'},
-    'customerAddNew':   {'en': 'New Customer', 'ar': 'إضافة عميل'},
-    'valNameRequired':  {'en': 'Customer name is required', 'ar': 'يرجى إدخال اسم العميل'},
-    'valPhoneRequired': {'en': 'Phone number is required', 'ar': 'يرجى إدخال رقم الهاتف'},
-    'valPhoneInvalidYemen': {'en': 'Phone must be 9 digits starting with 77, 78, 73, or 71', 'ar': 'رقم الهاتف يجب أن يتكون من 9 أرقام ويبدأ بـ (77, 78, 73, 71)'},
-    'valDobRequired':   {'en': 'Date of birth is required', 'ar': 'يرجى اختيار تاريخ الميلاد'},
-    'valAmountPaidRequired': {'en': 'Please enter the amount paid', 'ar': 'يرجى إدخال المبلغ المدفوع'},
-    'valAmountPaidExceedsTotal': {'en': 'Amount paid cannot exceed total amount', 'ar': 'المبلغ المدفوع يجب أن لا يتجاوز المبلغ الإجمالي'},
-    'errorInvalidAmount': {'en': 'Invalid amount entered', 'ar': 'المبلغ المدفوع غير صالح'},
-    'customerNoData':   {'en': 'No customers yet.', 'ar': 'لا يوجد عملاء بعد.'},
-    'customerDeleteWarning': {'en': 'Are you sure you want to delete this customer? All their records will be affected.', 'ar': 'هل أنت متأكد من حذف هذا العميل؟ ستتأثر جميع سجلاته.'},
+    'navCustomers': {'en': 'Customers', 'ar': 'العملاء'},
+    'customersTitle': {'en': 'Customers Management', 'ar': 'إدارة العملاء'},
+    'customerName': {'en': 'Name', 'ar': 'الاسم'},
+    'customerPhone': {'en': 'Phone', 'ar': 'رقم الهاتف'},
+    'customerAge': {'en': 'Age', 'ar': 'العمر'},
+    'customerDOB': {'en': 'Date of Birth', 'ar': 'تاريخ الميلاد'},
+    'customerBalance': {'en': 'Remaining Balance', 'ar': 'الرصيد المتبقي'},
+    'customerTotalPaid': {'en': 'Total Paid', 'ar': 'إجمالي المدفوعات'},
+    'customerAddNew': {'en': 'New Customer', 'ar': 'إضافة عميل'},
+    'valNameRequired': {
+      'en': 'Customer name is required',
+      'ar': 'يرجى إدخال اسم العميل',
+    },
+    'valNameInvalid': {
+      'en': 'Please enter a valid real name',
+      'ar': 'يرجى إدخال اسم حقيقي وتجنب الأحرف العشوائية',
+    },
+    'valPhoneRequired': {
+      'en': 'Phone number is required',
+      'ar': 'يرجى إدخال رقم الهاتف',
+    },
+    'valPhoneInvalidYemen': {
+      'en': 'Phone must be 9 digits starting with 77, 78, 73, or 71',
+      'ar': 'رقم الهاتف يجب أن يتكون من 9 أرقام ويبدأ بـ (77, 78, 73, 71)',
+    },
+    'valDobRequired': {
+      'en': 'Date of birth is required',
+      'ar': 'يرجى اختيار تاريخ الميلاد',
+    },
+    'valAmountPaidRequired': {
+      'en': 'Please enter the amount paid',
+      'ar': 'يرجى إدخال المبلغ المدفوع',
+    },
+    'valAmountPaidExceedsTotal': {
+      'en': 'Amount paid cannot exceed total amount',
+      'ar': 'المبلغ المدفوع يجب أن لا يتجاوز المبلغ الإجمالي',
+    },
+    'errorInvalidAmount': {
+      'en': 'Invalid amount entered',
+      'ar': 'المبلغ المدفوع غير صالح',
+    },
+    'customerNoData': {'en': 'No customers yet.', 'ar': 'لا يوجد عملاء بعد.'},
+    'customerDeleteWarning': {
+      'en':
+          'Are you sure you want to delete this customer? All their records will be affected.',
+      'ar': 'هل أنت متأكد من حذف هذا العميل؟ ستتأثر جميع سجلاته.',
+    },
     // ── Missing Translations ──────────────────────────────────────────────────
     'notSet': {'en': 'Not Set', 'ar': 'لم يحدد'},
     'payDebt': {'en': 'Pay Debt', 'ar': 'تسديد دفعة'},
     'customerColon': {'en': 'Customer:', 'ar': 'العميل:'},
     'remainingDebt': {'en': 'Remaining Debt:', 'ar': 'الديون المتبقية:'},
-    'amountToPayNow': {'en': 'Amount to pay now', 'ar': 'المبلغ المراد سداده الآن'},
-    'paymentSuccessful': {'en': 'Payment successful', 'ar': 'تم سداد الدفعة بنجاح'},
+    'amountToPayNow': {
+      'en': 'Amount to pay now',
+      'ar': 'المبلغ المراد سداده الآن',
+    },
+    'paymentSuccessful': {
+      'en': 'Payment successful',
+      'ar': 'تم سداد الدفعة بنجاح',
+    },
     'payBtn': {'en': 'Pay', 'ar': 'دفع'},
     'paymentHistory': {'en': 'Payment History', 'ar': 'سجل الدفعات'},
     'paymentHistoryColon': {'en': 'Payment History:', 'ar': 'سجل الدفعات:'},
-    'noPaymentHistory': {'en': 'No payment history found.', 'ar': 'لا يوجد سجل دفعات.'},
+    'noPaymentHistory': {
+      'en': 'No payment history found.',
+      'ar': 'لا يوجد سجل دفعات.',
+    },
     'closeBtn': {'en': 'Close', 'ar': 'إغلاق'},
-    'searchNamePhone': {'en': 'Search by name or phone...', 'ar': 'بحث بالاسم أو رقم الهاتف...'},
+    'searchNamePhone': {
+      'en': 'Search by name or phone...',
+      'ar': 'بحث بالاسم أو رقم الهاتف...',
+    },
     'searchName': {'en': 'Search by name...', 'ar': 'بحث بالاسم...'},
-    'noResultsFound': {'en': 'No results found.', 'ar': 'لم يتم العثور على نتائج.'},
-    
+    'noResultsFound': {
+      'en': 'No results found.',
+      'ar': 'لم يتم العثور على نتائج.',
+    },
+
     'walkInCustomer': {'en': 'Walk-in Customer', 'ar': 'عميل مباشر'},
-    'newCustomerWalkIn': {'en': 'New Customer / Walk-in', 'ar': 'عميل جديد (أدخل اسمه أدناه)'},
+    'newCustomerWalkIn': {
+      'en': 'New Customer / Walk-in',
+      'ar': 'عميل جديد (أدخل اسمه أدناه)',
+    },
     'subscribedSuffix': {'en': ' (Subscribed)', 'ar': ' (مشترك)'},
     'totalPrice': {'en': 'Total Price', 'ar': 'إجمالي السعر'},
     'totalPriceColon': {'en': 'Total Price:', 'ar': 'إجمالي السعر:'},
     'amountPaidNow': {'en': 'Amount Paid Now', 'ar': 'المبلغ المدفوع الان'},
-    
+
     'searchCustomer': {'en': 'Search Customer', 'ar': 'بحث عن عميل'},
-    'pleaseSelectCustomer': {'en': 'Please select or add a new customer', 'ar': 'يرجى اختيار عميل أو إضافة عميل جديد'},
+    'pleaseSelectCustomer': {
+      'en': 'Please select or add a new customer',
+      'ar': 'يرجى اختيار عميل أو إضافة عميل جديد',
+    },
     'daysLeft': {'en': 'Days Left', 'ar': 'الأيام المتبقية'},
     'days': {'en': 'days', 'ar': 'يوم'},
     'inProgress': {'en': 'In Progress', 'ar': 'جارية'},
@@ -304,15 +351,21 @@ class AppStrings {
     'confirmed': {'en': 'Confirmed', 'ar': 'مؤكد'},
     'hourlyBooking': {'en': 'Hourly Booking', 'ar': 'حجز بالساعة'},
     // ── Extra Dashboard & Finance ─────────────────────────────────────────────
-    'dashOverview': {'en': 'Overview of your business', 'ar': 'نظرة عامة على عملك'},
-    'dashWeeklyTrend': {'en': 'Weekly Revenue Trend', 'ar': 'اتجاه الإيرادات الأسبوعية'},
+    'dashOverview': {
+      'en': 'Overview of your business',
+      'ar': 'نظرة عامة على عملك',
+    },
+    'dashWeeklyTrend': {
+      'en': 'Weekly Revenue Trend',
+      'ar': 'اتجاه الإيرادات الأسبوعية',
+    },
     'dashRecentActivity': {'en': 'Recent Activity', 'ar': 'النشاط الأخير'},
     'dashViewAll': {'en': 'View All', 'ar': 'عرض الكل'},
     'dashHighDemand': {'en': 'High Demand', 'ar': 'طلب عالٍ'},
     'dashBookingLabel': {'en': 'Booking:', 'ar': 'حجز:'},
     'dashStatusConfirmed': {'en': 'Status: Confirmed', 'ar': 'الحالة: مؤكد'},
     'dashJustNow': {'en': 'Just now', 'ar': 'الآن'},
-    
+
     'finRecentTrans': {'en': 'Recent Transactions', 'ar': 'أحدث المعاملات'},
     'finAllTypes': {'en': 'All Types', 'ar': 'جميع الأنواع'},
     'finBookings': {'en': 'Bookings', 'ar': 'حجوزات'},
@@ -320,35 +373,68 @@ class AppStrings {
     'finNoTrans': {'en': 'No transactions found', 'ar': 'لا توجد معاملات'},
     'finMethod': {'en': 'Method', 'ar': 'الطريقة'},
     'finShowing': {'en': 'Total entries:', 'ar': 'إجمالي المعاملات:'},
-    
-    'posSubtitle': {'en': 'Manage your Walk-in bookings easily', 'ar': 'إدارة حجوزات نقطة البيع بسهولة'},
+
+    'posSubtitle': {
+      'en': 'Manage your Walk-in bookings easily',
+      'ar': 'إدارة حجوزات نقطة البيع بسهولة',
+    },
     // ── Additional Dashboard Translations ─────────────────────────────────────
     'dashWelcome': {'en': 'Welcome back, ', 'ar': 'مرحباً بك مجدداً، '},
-    'dashSubtitle': {'en': "Here's what's happening at AquaFit Pro today.", 'ar': 'إليك ما يحدث في نظامك اليوم.'},
+    'dashSubtitle': {
+      'en': "Here's what's happening at AquaFit Pro today.",
+      'ar': 'إليك ما يحدث في نظامك اليوم.',
+    },
     'dashResources': {'en': 'RESOURCES', 'ar': 'الموارد'},
     'dashOccupancy': {'en': 'OCCUPANCY RATE', 'ar': 'معدل الإشغال'},
     'dashNoActivity': {'en': 'No activity today', 'ar': 'لا يوجد نشاط اليوم'},
     // ── Additional Finance Translations ───────────────────────────────────────
-    'finSubtitle': {'en': 'Overview of your current financial standing and recent transactions.', 'ar': 'نظرة عامة على وضعك المالي الحالي والمعاملات الأخيرة.'},
+    'finSubtitle': {
+      'en':
+          'Overview of your current financial standing and recent transactions.',
+      'ar': 'نظرة عامة على وضعك المالي الحالي والمعاملات الأخيرة.',
+    },
     'finCurrentBalance': {'en': 'CURRENT BALANCE', 'ar': 'الرصيد الحالي'},
-    'finLastMonth': {'en': '+4.2% from last month', 'ar': '+4.2% عن الشهر الماضي'},
-    'finTotalCash': {'en': 'TOTAL CASH IN DRAWER', 'ar': 'إجمالي النقد في الصندوق'},
-    'finReconciled': {'en': 'Last reconciled 2h ago', 'ar': 'آخر تسوية منذ ساعتين'},
+    'finLastMonth': {
+      'en': '+4.2% from last month',
+      'ar': '+4.2% عن الشهر الماضي',
+    },
+    'finTotalCash': {
+      'en': 'TOTAL CASH IN DRAWER',
+      'ar': 'إجمالي النقد في الصندوق',
+    },
+    'finReconciled': {
+      'en': 'Last reconciled 2h ago',
+      'ar': 'آخر تسوية منذ ساعتين',
+    },
     'finReconcileNow': {'en': 'Reconcile Now', 'ar': 'تسوية الآن'},
-    'finSearchHint': {'en': 'Search transactions...', 'ar': 'ابحث في المعاملات...'},
-    // ____ Additional user management translations 
-    'usersSubtitle': {'en': 'Manage employee accounts, roles, and permissions.', 'ar':'إدارة حسابات الموظفين وأدوارهم وصلاحياتهم.'},
-     
+    'finSearchHint': {
+      'en': 'Search transactions...',
+      'ar': 'ابحث في المعاملات...',
+    },
+    // ____ Additional user management translations
+    'usersSubtitle': {
+      'en': 'Manage employee accounts, roles, and permissions.',
+      'ar': 'إدارة حسابات الموظفين وأدوارهم وصلاحياتهم.',
+    },
 
-    // ____ Additional Subscription translations 
-    'subSubtitle': {'en': 'Manage active memberships and plans.', 'ar':'إدارة العضويات والخطط النشطة.'},
-    'supRecentTrans': {'en': 'All Subscriptions', 'ar':'جميع الاشتراكات'},
+    // ____ Additional Subscription translations
+    'cancelSubscription': {'en': 'Cancel Subscription', 'ar': 'إلغاء الاشتراك'},
+    'subSubtitle': {
+      'en': 'Manage active memberships and plans.',
+      'ar': 'إدارة العضويات والخطط النشطة.',
+    },
+    'supRecentTrans': {'en': 'All Subscriptions', 'ar': 'جميع الاشتراكات'},
     // ____ Additional Customer translations
-    'customersSubtitle': {'en': 'Manage customer profiles, balances, and payment history.', 'ar':'إدارة ملفات العملاء، الأرصدة، وسجل الدفعات.'},
+    'customersSubtitle': {
+      'en': 'Manage customer profiles, balances, and payment history.',
+      'ar': 'إدارة ملفات العملاء، الأرصدة، وسجل الدفعات.',
+    },
 
     // ____ Additional Calendar translations
-    'calSubtitle': {'en': 'View and manage scheduled bookings.', 'ar':'عرض وإدارة الحجوزات المجدولة.'},
-
+    'calSubtitle': {
+      'en': 'View and manage scheduled bookings.',
+      'ar': 'عرض وإدارة الحجوزات المجدولة.',
+    },
 
     'appsuptitle': {'en': 'Smart Booking', 'ar': ' الحجوزات الذكي'},
 
@@ -359,7 +445,7 @@ class AppStrings {
     'receiptTitleSub': {'en': 'Subscription Receipt', 'ar': 'فاتورة اشتراك'},
 
     // ── Check-In ──────────────────────────────────────────────────────────────
-    'navCheckin': {'en': 'Check-In', 'ar': 'تسجيل الدخول'},
+    'navCheckin': {'en': 'Fingerprint Check-In', 'ar': 'التحقق (البصمة)'},
     'checkinTitle': {'en': 'Member Check-In', 'ar': 'فحص عضوية الأعضاء'},
     'checkinSubtitle': {
       'en': 'Verify membership before entry',
@@ -367,7 +453,10 @@ class AppStrings {
     },
     'checkinByPhone': {'en': 'Search by Phone', 'ar': 'البحث برقم الهاتف'},
     'checkinPhoneHint': {'en': 'Enter phone number', 'ar': 'أدخل رقم الهاتف'},
-    'checkinByFingerprint': {'en': 'External Scanner', 'ar': 'جهاز البصمة الخارجي'},
+    'checkinByFingerprint': {
+      'en': 'External Scanner',
+      'ar': 'جهاز البصمة الخارجي',
+    },
     'checkinFingerprintHint': {
       'en': 'Place finger on scanner, code will appear here',
       'ar': 'ضع الإصبع على الجهاز، سيظهر الكود هنا',
@@ -396,8 +485,14 @@ class AppStrings {
       'en': 'Biometric not available on this device',
       'ar': 'البصمة الحيوية غير متاحة على هذا الجهاز',
     },
-    'checkinBiometricSuccess': {'en': 'Identity verified!', 'ar': 'تم التحقق من الهوية!'},
-    'checkinBiometricFailed': {'en': 'Biometric failed', 'ar': 'فشل التحقق بالبصمة'},
+    'checkinBiometricSuccess': {
+      'en': 'Identity verified!',
+      'ar': 'تم التحقق من الهوية!',
+    },
+    'checkinBiometricFailed': {
+      'en': 'Biometric failed',
+      'ar': 'فشل التحقق بالبصمة',
+    },
     'checkinEnterPhone': {
       'en': 'Please enter the phone number to continue',
       'ar': 'أدخل رقم الهاتف للمتابعة',
@@ -410,8 +505,10 @@ class AppStrings {
       'en': 'Fingerprint ID linked successfully!',
       'ar': 'تم ربط البصمة بنجاح!',
     },
-    'checkinScannerMode': {'en': 'External Device Mode', 'ar': 'وضع الجهاز الخارجي'},
-
+    'checkinScannerMode': {
+      'en': 'External Device Mode',
+      'ar': 'وضع الجهاز الخارجي',
+    },
   };
 
   static String t(String key, bool isAr) {

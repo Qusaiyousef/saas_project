@@ -57,9 +57,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
         ),
         data: (bookings) {
+          final validBookings = bookings.where((b) => b['status'] != 1 && b['status'] != 'Cancelled').toList();
           final selectedEvents = _getEventsForDay(
             _selectedDay ?? _focusedDay,
-            bookings,
+            validBookings,
           );
 
           return SingleChildScrollView(
@@ -149,7 +150,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                   setState(() => _focusedDay = focusedDay);
                                 },
                                 eventLoader: (day) =>
-                                    _getEventsForDay(day, bookings),
+                                    _getEventsForDay(day, validBookings),
                                 calendarStyle: CalendarStyle(
                                   todayDecoration: BoxDecoration(
                                     color: Theme.of(

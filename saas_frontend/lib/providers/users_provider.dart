@@ -24,7 +24,7 @@ class UsersNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
         'fullName': fullName,
         'password': password,
         'role': role,
-        if (permissions != null) 'permissions': permissions,
+        'permissions': ?permissions,
       });
       ref.invalidateSelf();
     } on DioException catch (e) {
@@ -48,7 +48,7 @@ class UsersNotifier extends AsyncNotifier<List<Map<String, dynamic>>> {
         'fullName': fullName,
         'password': password,
         'role': role,
-        if (permissions != null) 'permissions': permissions,
+        'permissions': ?permissions,
       });
       ref.invalidateSelf();
     } on DioException catch (e) {

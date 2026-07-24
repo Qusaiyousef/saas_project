@@ -498,6 +498,9 @@ namespace SaasBackend.Migrations
                     b.Property<bool>("CanAccessCalendar")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("CanAccessCheckin")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("CanAccessCustomers")
                         .HasColumnType("bit");
 

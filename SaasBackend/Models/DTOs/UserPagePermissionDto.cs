@@ -10,4 +10,5 @@ public class UserPagePermissionDto
     public bool CanAccessFinance { get; set; }
     public bool CanAccessCustomers { get; set; }
     public bool CanAccessSettings { get; set; }
+    public bool CanAccessCheckin { get; set; }
 }

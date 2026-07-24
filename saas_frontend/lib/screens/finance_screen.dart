@@ -456,9 +456,13 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                                   s('finNoTransSub'),
                                 );
                               }
-
+                              final isMobile = MediaQuery.of(context).size.width <= 800;
+                              if (isMobile) {
+                                return _buildMobileTransactionsList(filtered, isAr, context);
+                              }
 
                               return DataTable2(
+                                showCheckboxColumn: false,
                                 sortColumnIndex: _sortColumnIndex,
                                 sortAscending: _sortAscending,
                                 columnSpacing: 16,
@@ -568,13 +572,24 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                                   final isBooking = t['type'] == 'Booking';
                                   final amount =
                                       double.tryParse('${t['amount']}') ?? 0.0;
-                                  final paymentMethodStr = t['method']?.toString() ?? (isBooking ? 'Cash' : 'Card');
+                                  String paymentMethodStr = t['method']?.toString() ?? (isBooking ? 'Cash' : 'Card');
                                   final isTransfer = paymentMethodStr.toLowerCase() == 'transfer';
                                   final pIcon = isTransfer
                                       ? Icons.swap_horiz
                                       : (paymentMethodStr.toLowerCase() == 'card' ? Icons.credit_card : Icons.payments);
 
+                                  if (isAr) {
+                                    if (paymentMethodStr.toLowerCase() == 'cash') paymentMethodStr = 'كاش (نقدي)';
+                                    else if (paymentMethodStr.toLowerCase() == 'card') paymentMethodStr = 'بطاقة بنكية';
+                                    else if (paymentMethodStr.toLowerCase() == 'transfer') paymentMethodStr = 'تحويل بنكي';
+                                  }
+
                                   return DataRow(
+                                    onSelectChanged: (selected) {
+                                      if (selected == true) {
+                                        _showTransactionDetails(context, t, isAr, pIcon, paymentMethodStr, isBooking ? (isAr ? 'حجز' : 'Booking') : (isAr ? 'اشتراك' : 'Subscription'), amount, dt);
+                                      }
+                                    },
                                     cells: [
                                       DataCell(
                                         Text(
@@ -589,10 +604,11 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                                       DataCell(
                                         Text(
                                           isBooking
-                                              ? '${AppStrings.t('dashBookingLabel', isAr)} - ${t['customerName'] ?? 'Walk-in'}'
-                                              : '${AppStrings.t('finSubscriptions', isAr)} - ${t['customerName'] ?? 'Walk-in'}',
-                                          style: const TextStyle(
+                                              ? '${AppStrings.t('dashBookingLabel', isAr)} - ${t['customerName'] ?? AppStrings.t('walkInCustomer', isAr)} ${t['status'] == 'Cancelled' ? (isAr ? '(مبلغ مخصوم)' : '(Deducted)') : ''}'
+                                              : '${AppStrings.t('finSubscriptions', isAr)} - ${t['customerName'] ?? AppStrings.t('walkInCustomer', isAr)}',
+                                          style: TextStyle(
                                             fontWeight: FontWeight.bold,
+                                            color: t['status'] == 'Cancelled' ? Theme.of(context).colorScheme.error : null,
                                           ),
                                         ),
                                       ),
@@ -650,9 +666,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                                           '+\$${amount.toStringAsFixed(2)}',
                                           style: TextStyle(
                                             fontFamily: 'JetBrains Mono',
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
+                                            color: t['status'] == 'Cancelled'
+                                                ? Theme.of(context).colorScheme.error
+                                                : Theme.of(context).colorScheme.primary,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -943,6 +959,248 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       transactions: filteredTx,
       startDate: _startDate,
       endDate: _endDate,
+    );
+  }
+
+  Widget _buildMobileTransactionsList(List<dynamic> transactions, bool isAr, BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: transactions.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final t = transactions[index];
+        final dt = DateTime.parse(t['date']).toLocal();
+        final isBooking = t['type'] == 'Booking';
+        final amount = double.tryParse('${t['amount']}') ?? 0.0;
+        String paymentMethodStr = t['method']?.toString() ?? (isBooking ? 'Cash' : 'Card');
+        final isTransfer = paymentMethodStr.toLowerCase() == 'transfer';
+        final pIcon = isTransfer
+            ? Icons.swap_horiz
+            : (paymentMethodStr.toLowerCase() == 'card' ? Icons.credit_card : Icons.payments);
+            
+        if (isAr) {
+          if (paymentMethodStr.toLowerCase() == 'cash') paymentMethodStr = 'كاش (نقدي)';
+          else if (paymentMethodStr.toLowerCase() == 'card') paymentMethodStr = 'بطاقة بنكية';
+          else if (paymentMethodStr.toLowerCase() == 'transfer') paymentMethodStr = 'تحويل بنكي';
+        }
+
+        final title = isBooking
+            ? '${AppStrings.t('dashBookingLabel', isAr)} - ${t['customerName'] ?? AppStrings.t('walkInCustomer', isAr)}'
+            : '${AppStrings.t('finSubscriptions', isAr)} - ${t['customerName'] ?? AppStrings.t('walkInCustomer', isAr)}';
+
+        return Card(
+          margin: EdgeInsets.zero,
+          elevation: 0,
+          color: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+            ),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _showTransactionDetails(context, t, isAr, pIcon, paymentMethodStr, title, amount, dt),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(pIcon, color: Theme.of(context).colorScheme.primary),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (t['status'] == 'Cancelled')
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              isAr ? 'مبلغ مخصوم' : 'Deducted Amount',
+                              style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
+                            ),
+                          ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${dt.day}/${dt.month}/${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '\$${amount.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: t['status'] == 'Cancelled'
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showTransactionDetails(
+    BuildContext context,
+    dynamic t,
+    bool isAr,
+    IconData pIcon,
+    String paymentMethodStr,
+    String title,
+    double amount,
+    DateTime dt,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: false,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).dividerColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(pIcon, size: 28, color: Theme.of(context).colorScheme.primary),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            isAr ? (t['description'] ?? '').toString().replaceAll('Booking', 'حجز').replaceAll('Membership Plan', 'خطة اشتراك').replaceAll('Subscription:', 'اشتراك:').replaceAll('Monthly', 'شهري').replaceAll('Yearly', 'سنوي').replaceAll('Weekly', 'أسبوعي').replaceAll('Daily', 'يومي').replaceAll('Plan', 'خطة') : (t['description'] ?? ''),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          ),
+                          if (t['fingerprintId'] != null && t['fingerprintId'].toString().isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                '${isAr ? 'رقم المشترك' : 'Subscriber ID'}: ${t['fingerprintId']}',
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                
+                // Details
+                _buildDetailRow(context, AppStrings.t('financeDate', isAr), '${dt.day}/${dt.month}/${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}'),
+                const Divider(),
+                _buildDetailRow(context, AppStrings.t('finMethod', isAr), paymentMethodStr),
+                const Divider(),
+                _buildDetailRow(context, AppStrings.t('subStatus', isAr), t['status'] == 'Cancelled' ? (isAr ? 'مبلغ مخصوم (ملغي)' : 'Deducted (Cancelled)') : AppStrings.t('completed', isAr)),
+                const Divider(),
+                _buildDetailRow(context, AppStrings.t('financeAmount', isAr), '\$${amount.toStringAsFixed(2)}', isAmount: true),
+                
+                const SizedBox(height: 32),
+                
+                // Actions
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          // Print action
+                          _printReport([t], title, isAr);
+                        },
+                        icon: const Icon(Icons.print),
+                        label: Text(AppStrings.t('printReceipt', isAr)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(BuildContext context, String label, String value, {bool isAmount = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 16,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: isAmount ? 20 : 16,
+              color: isAmount ? Theme.of(context).colorScheme.primary : null,
+              fontFamily: isAmount ? 'JetBrains Mono' : null,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

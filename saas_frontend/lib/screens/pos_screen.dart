@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/pos_provider.dart';
 import '../providers/customers_provider.dart';
+import '../utils/validators.dart';
 import '../providers/locale_provider.dart';
 import '../providers/auth_provider.dart';
 import '../l10n/app_strings.dart';
@@ -46,10 +47,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     final isAr = ref.read(isArabicProvider);
+    final authState = ref.read(authProvider);
+    final prefix = authState.tenantType?.name ?? 'pool';
     _updateState(() {
-      _autoPrint = prefs.getBool('posAutoPrint') ?? true;
-      _useAutoName = prefs.getBool('posUseAutoName') ?? false;
-      _autoCustomerCount = prefs.getInt('posAutoCustomerCount') ?? 1;
+      _autoPrint = prefs.getBool('posAutoPrint_$prefix') ?? prefs.getBool('posAutoPrint') ?? true;
+      _useAutoName = prefs.getBool('posUseAutoName_$prefix') ?? prefs.getBool('posUseAutoName') ?? false;
+      _autoCustomerCount = prefs.getInt('posAutoCustomerCount_$prefix') ?? prefs.getInt('posAutoCustomerCount') ?? 1;
       _priceController.text = '10.00';
       if (_useAutoName && _selectedCustomerId == null) {
         _nameController.text = isAr ? 'العميل : $_autoCustomerCount' : 'Customer : $_autoCustomerCount';
@@ -58,8 +61,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Future<void> _toggleAutoName(bool val) async {
+    final authState = ref.read(authProvider);
+    final prefix = authState.tenantType?.name ?? 'pool';
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('posUseAutoName', val);
+    await prefs.setBool('posUseAutoName_$prefix', val);
     if (!mounted) return;
     final isAr = ref.read(isArabicProvider);
     _updateState(() {
@@ -73,8 +78,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Future<void> _toggleAutoPrint(bool val) async {
+    final authState = ref.read(authProvider);
+    final prefix = authState.tenantType?.name ?? 'pool';
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('posAutoPrint', val);
+    await prefs.setBool('posAutoPrint_$prefix', val);
     _updateState(() => _autoPrint = val);
   }
 
@@ -146,9 +153,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               : _nameController.text;
           
           if (_useAutoName) {
+            final authState = ref.read(authProvider);
+            final prefix = authState.tenantType?.name ?? 'pool';
             final prefs = await SharedPreferences.getInstance();
             _autoCustomerCount++;
-            await prefs.setInt('posAutoCustomerCount', _autoCustomerCount);
+            await prefs.setInt('posAutoCustomerCount_$prefix', _autoCustomerCount);
             if (mounted) {
               _updateState(() {
                 _nameController.text = isAr ? 'العميل : $_autoCustomerCount' : 'Customer : $_autoCustomerCount';
@@ -292,7 +301,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final customersData = ref.watch(customersProvider);
     final isAr = ref.watch(isArabicProvider);
     final isChalet = ref.read(authProvider).tenantType == TenantType.chalet;
-    final s = (String key) => AppStrings.t(key, isAr);
+    String s(String key) => AppStrings.t(key, isAr);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -562,7 +571,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 Expanded(
                   child: DropdownButtonFormField<String?>(
                     isExpanded: true,
-                    value: _selectedCustomerId,
+                    initialValue: _selectedCustomerId,
                     decoration: InputDecoration(
                       labelText: s('SelectCustomer'),
                       prefixIcon: const Icon(Icons.person_search),
@@ -618,7 +627,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               value: _useAutoName,
-              activeColor: colors.primary,
+              activeThumbColor: colors.primary,
               onChanged: _toggleAutoName,
               contentPadding: EdgeInsets.zero,
             ),
@@ -664,7 +673,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           SwitchListTile(
             title: Text(s('posFullDayBlock')),
             value: _isFullDay,
-            activeColor: colors.primary,
+            activeThumbColor: colors.primary,
             onChanged: (val) {
               _updateState(() {
                 _isFullDay = val;
@@ -699,7 +708,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedDuration,
+              initialValue: _selectedDuration,
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: s('posDuration'),
@@ -768,7 +777,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _selectedPaymentMethod,
+            initialValue: _selectedPaymentMethod,
             decoration: InputDecoration(
               labelText: isAr ? 'طريقة الدفع' : 'Payment Method',
               prefixIcon: const Icon(Icons.payment),
@@ -790,7 +799,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           SwitchListTile(
             title: Text(AppStrings.t('autoPrint', isAr)),
             value: _autoPrint,
-            activeColor: colors.primary,
+            activeThumbColor: colors.primary,
             onChanged: _toggleAutoPrint,
             contentPadding: EdgeInsets.zero,
           ),
@@ -853,7 +862,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               a['startTime'],
             ).compareTo(DateTime.parse(b['startTime'])),
           );
-        if (sorted.isEmpty)
+        if (sorted.isEmpty) {
           return Center(
             child: Text(
               s('posNoBookings'),
@@ -862,6 +871,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               ),
             ),
           );
+        }
 
         return ListView.builder(
           shrinkWrap: !isMobile,
@@ -1157,9 +1167,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               : (AppStrings.t('notSet', isAr));
           return AlertDialog(
             title: Text(AppStrings.t('customerAddNew', isAr)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+            content: SizedBox(
+              width: 450,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 TextField(
                   controller: nameController,
                   decoration: InputDecoration(
@@ -1207,7 +1219,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 ),
               ],
             ),
-            actions: [
+          ),
+          actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(AppStrings.t('cancel', isAr)),
@@ -1223,6 +1236,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             SnackBar(
                               content: Text(AppStrings.t('valNameRequired', isAr)),
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (!FormValidators.isValidName(name)) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text(AppStrings.t('valNameInvalid', isAr)),
                               backgroundColor: Theme.of(context).colorScheme.error,
                             ),
                           );

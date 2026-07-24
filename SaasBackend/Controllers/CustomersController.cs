@@ -58,6 +58,11 @@ public class CustomersController : ControllerBase
         if (!input.DateOfBirth.HasValue)
             return BadRequest(new { message = "تاريخ الميلاد مطلوب." });
 
+        var existingCustomer = await _context.Customers
+            .FirstOrDefaultAsync(c => c.Phone == phone && !c.IsDeleted);
+        if (existingCustomer != null)
+            return BadRequest(new { message = $"رقم الهاتف هذا مسجل بالفعل للعميل ({existingCustomer.Name})." });
+
         var customer = new Customer
         {
             Name = input.Name,

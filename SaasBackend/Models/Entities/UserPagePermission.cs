@@ -18,6 +18,7 @@ public class UserPagePermission : ITenantEntity
     public bool CanAccessFinance { get; set; } = true;
     public bool CanAccessCustomers { get; set; } = true;
     public bool CanAccessSettings { get; set; } = true;
+    public bool CanAccessCheckin { get; set; } = true;
 
     // Tenant support
     public Guid TenantId { get; set; }

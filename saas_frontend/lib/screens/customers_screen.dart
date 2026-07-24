@@ -297,7 +297,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                           setState(() => isPaying = false);
                           ScaffoldMessenger.of(
                             ctx,
-                          ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                          ).showSnackBar(SnackBar(content: Text(isAr ? 'حدث خطأ: $e' : 'Error: $e')));
                         }
                       },
                 icon: isPaying
@@ -341,7 +341,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
               }
               if (snapshot.hasError) {
                 return Text(
-                  'Error: ${snapshot.error}',
+                  isAr ? 'حدث خطأ: ${snapshot.error}' : 'Error: ${snapshot.error}',
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 );
               }
@@ -613,7 +613,13 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                 );
                               }
 
+                              final isMobile = MediaQuery.of(context).size.width <= 800;
+                              if (isMobile) {
+                                return _buildMobileCustomersList(filteredCustomers, isAr, context);
+                              }
+
                               return DataTable2(
+                                showCheckboxColumn: false,
                                 sortColumnIndex: _sortColumnIndex,
                                 sortAscending: _sortAscending,
                                 columnSpacing: 16,
@@ -740,6 +746,11 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                   final hasDebt = balance > 0;
 
                                   return DataRow(
+                                    onSelectChanged: (selected) {
+                                      if (selected == true) {
+                                        _showCustomerDetails(context, c, isAr, totalPaid, balance);
+                                      }
+                                    },
                                     cells: [
                                       DataCell(
                                         Row(
@@ -1017,7 +1028,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                                           content: Text(
                                                             isForeignKey 
                                                               ? (isAr ? 'عذراً، لا يمكن حذف العميل لوجود حجوزات أو مبالغ مالية مرتبطة به.' : 'Cannot delete customer because they have related bookings or transactions.') 
-                                                              : 'Error: $e',
+                                                              : (isAr ? 'حدث خطأ: $e' : 'Error: $e'),
                                                           ),
                                                           backgroundColor:
                                                               Theme.of(context)
@@ -1048,6 +1059,311 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMobileCustomersList(List<dynamic> customers, bool isAr, BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 24),
+      itemCount: customers.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final c = customers[index];
+        final phone = c['phone'] ?? '';
+        final totalPaid = (c['totalPaid'] as num?)?.toDouble() ?? 0.0;
+        final balance = (c['balance'] as num?)?.toDouble() ?? 0.0;
+        
+        return Card(
+          margin: EdgeInsets.zero,
+          elevation: 0,
+          color: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _showCustomerDetails(context, c, isAr, totalPaid, balance),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    child: Text(
+                      (c['name'] as String? ?? 'U')[0].toUpperCase(),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          c['name'] ?? '',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.phone, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            const SizedBox(width: 4),
+                            Text(
+                              phone,
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showCustomerDetails(
+    BuildContext context,
+    dynamic c,
+    bool isAr,
+    double totalPaid,
+    double balance,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: false,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final hasDebt = balance > 0;
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(ctx).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: Theme.of(ctx).dividerColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // Header
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.1),
+                      child: Text(
+                        (c['name'] as String? ?? 'U')[0].toUpperCase(),
+                        style: TextStyle(
+                          color: Theme.of(ctx).colorScheme.primary,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            c['name'] ?? '',
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${AppStrings.t('customerPhone', isAr)}: ${c['phone'] ?? ''}',
+                            style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                          ),
+                          if (c['fingerprintId'] != null && c['fingerprintId'].toString().isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                '${isAr ? 'رقم المشترك' : 'Subscriber ID'}: ${c['fingerprintId']}',
+                                style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                
+                // Details
+                _buildDetailRow(ctx, AppStrings.t('customerTotalPaid', isAr), '\$${totalPaid.toStringAsFixed(2)}', isAmount: true),
+                const Divider(),
+                _buildDetailRow(ctx, AppStrings.t('customerBalance', isAr), '\$${balance.toStringAsFixed(2)}', isAmount: true, colorOverride: hasDebt ? Theme.of(ctx).colorScheme.error : null),
+                
+                const SizedBox(height: 32),
+                
+                // Actions
+                if (hasDebt)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _showPayDebtDialog(context, ref, isAr, c);
+                        },
+                        icon: const Icon(Icons.payments),
+                        label: Text(AppStrings.t('payDebt', isAr)),
+                      ),
+                    ),
+                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _showPaymentHistory(context, ref, isAr, c['id'], c['name']);
+                        },
+                        icon: const Icon(Icons.history),
+                        label: Text(AppStrings.t('paymentHistory', isAr)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          if (c['hasActiveSubscription'] == true) {
+                            showDialog(
+                              context: context,
+                              builder: (dCtx) => AlertDialog(
+                                title: Row(
+                                  children: [
+                                    Icon(Icons.warning_amber_rounded, color: Theme.of(context).colorScheme.error),
+                                    const SizedBox(width: 8),
+                                    Expanded(child: Text(isAr ? 'عذراً، لا يمكن الحذف' : 'Cannot Delete')),
+                                  ],
+                                ),
+                                content: Text(
+                                  isAr 
+                                    ? 'لا يمكن حذف هذا العميل لأن لديه اشتراك حالي وفعال. الرجاء إلغاء اشتراكه أولاً.' 
+                                    : 'This customer cannot be deleted because they have an active subscription. Please cancel it first.',
+                                  style: const TextStyle(fontSize: 15),
+                                ),
+                                actions: [
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(dCtx),
+                                    child: Text(AppStrings.t('ok', isAr)),
+                                  ),
+                                ],
+                              ),
+                            );
+                            return;
+                          }
+
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (dCtx) => AlertDialog(
+                              title: Text(AppStrings.t('deleteCustomer', isAr)),
+                              content: Text(AppStrings.t('confirmDeleteCustomer', isAr)),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(dCtx, false),
+                                  child: Text(AppStrings.t('cancel', isAr)),
+                                ),
+                                FilledButton(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Theme.of(context).colorScheme.error,
+                                    foregroundColor: Theme.of(context).colorScheme.onError,
+                                  ),
+                                  onPressed: () => Navigator.pop(dCtx, true),
+                                  child: Text(AppStrings.t('delete', isAr)),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            try {
+                              await ref.read(customersProvider.notifier).deleteCustomer(c['id']);
+                            } catch (e) {
+                              if (context.mounted) {
+                                final errorMsg = e.toString().toLowerCase();
+                                final isForeignKey = errorMsg.contains('foreign') || errorMsg.contains('constraint') || errorMsg.contains('500');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      isForeignKey 
+                                        ? (isAr ? 'عذراً، لا يمكن حذف العميل لوجود حجوزات أو مبالغ مالية مرتبطة به.' : 'Cannot delete customer because they have related bookings or transactions.') 
+                                        : (isAr ? 'حدث خطأ: $e' : 'Error: $e'),
+                                    ),
+                                    backgroundColor: Theme.of(context).colorScheme.error,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(ctx).colorScheme.error,
+                          foregroundColor: Theme.of(ctx).colorScheme.onError,
+                        ),
+                        icon: const Icon(Icons.delete),
+                        label: Text(AppStrings.t('delete', isAr)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(BuildContext context, String label, String value, {bool isAmount = false, Color? colorOverride}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 16,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: isAmount ? 20 : 16,
+              color: colorOverride ?? (isAmount ? Theme.of(context).colorScheme.primary : null),
+              fontFamily: isAmount ? 'JetBrains Mono' : null,
+            ),
+          ),
+        ],
       ),
     );
   }

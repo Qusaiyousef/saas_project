@@ -1,11 +1,13 @@
 import 'dart:ui' as dart_ui;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 import '../services/print_service.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:data_table_2/data_table_2.dart';
 import '../providers/subscription_provider.dart';
+import '../utils/validators.dart';
 import '../providers/customers_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_strings.dart';
@@ -39,7 +41,8 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
 
   Future<void> _initAutoPrint() async {
     final prefs = await SharedPreferences.getInstance();
-    if (mounted) setState(() => _autoPrint = prefs.getBool('subAutoPrint') ?? true);
+    if (mounted)
+      setState(() => _autoPrint = prefs.getBool('subAutoPrint') ?? true);
   }
 
   Future<void> _toggleAutoPrint(bool val) async {
@@ -64,6 +67,24 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) {
+          dynamic activeSub;
+          if (selectedCustomerId != null) {
+            final allSubs = ref.read(subscriptionProvider).asData?.value ?? [];
+            try {
+              activeSub = allSubs.firstWhere(
+                (s) =>
+                    s['customerId']?.toString().toLowerCase() ==
+                        selectedCustomerId?.toString().toLowerCase() &&
+                    (s['status'] == 0 ||
+                        s['status']?.toString() == '0' ||
+                        s['status']?.toString().toLowerCase() == 'active') &&
+                    DateTime.parse(s['endDate']).isAfter(DateTime.now()),
+              );
+            } catch (_) {
+              activeSub = null;
+            }
+          }
+
           return AlertDialog(
             title: Row(
               children: [
@@ -75,151 +96,206 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                 Text(AppStrings.t('subAddNew', isAr)),
               ],
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
+            content: SizedBox(
+              width: 480,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: DropdownMenu<String?>(
-                        expandedInsets: EdgeInsets.zero,
-                        enableFilter: true,
-                        leadingIcon: const Icon(Icons.search),
-                        label: Text(AppStrings.t('searchCustomer', isAr)),
-                        inputDecorationTheme: const InputDecorationTheme(
-                          border: OutlineInputBorder(),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownMenu<String?>(
+                            expandedInsets: EdgeInsets.zero,
+                            enableFilter: true,
+                            leadingIcon: const Icon(Icons.search),
+                            label: Text(AppStrings.t('searchCustomer', isAr)),
+                            inputDecorationTheme: const InputDecorationTheme(
+                              border: OutlineInputBorder(),
+                            ),
+                            dropdownMenuEntries: [
+                              ...customers.map((c) {
+                                final isSubbed =
+                                    c['hasActiveSubscription'] == true;
+                                final subText = isSubbed
+                                    ? (AppStrings.t('subscribedSuffix', isAr))
+                                    : '';
+                                return DropdownMenuEntry<String?>(
+                                  value: c['id'],
+                                  label: '${c['name']}$subText',
+                                );
+                              }),
+                            ],
+                            onSelected: (val) =>
+                                setState(() => selectedCustomerId = val),
+                          ),
                         ),
-                        dropdownMenuEntries: [
-                          ...customers.map((c) {
-                            final isSubbed = c['hasActiveSubscription'] == true;
-                            final subText = isSubbed
-                                ? (AppStrings.t('subscribedSuffix', isAr))
-                                : '';
-                            return DropdownMenuEntry<String?>(
-                              value: c['id'],
-                              label: '${c['name']}$subText',
-                            );
-                          }),
-                        ],
-                        onSelected: (val) =>
-                            setState(() => selectedCustomerId = val),
-                      ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(
+                            Icons.person_add,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          tooltip: AppStrings.t('customerAddNew', isAr),
+                          onPressed: () {
+                            _showCreateCustomerDialog(context, ref, isAr).then((
+                              _,
+                            ) {
+                              Navigator.pop(ctx);
+                            });
+                          },
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: Icon(
-                        Icons.person_add,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      tooltip: AppStrings.t('customerAddNew', isAr),
-                      onPressed: () {
-                        _showCreateCustomerDialog(context, ref, isAr).then((_) {
-                          Navigator.pop(ctx);
-                        });
-                      },
-                    ),
-                  ],
-                ),
-                if (selectedCustomerId == null) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    AppStrings.t('pleaseSelectCustomer', isAr),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: selectedPlan,
-                  decoration: InputDecoration(
-                    labelText: AppStrings.t('subPlan', isAr),
-                    prefixIcon: const Icon(Icons.calendar_today),
-                    border: const OutlineInputBorder(),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: '1 Month', child: Text('1 Month')),
-                    DropdownMenuItem(
-                      value: '3 Months',
-                      child: Text('3 Months'),
-                    ),
-                    DropdownMenuItem(
-                      value: '6 Months',
-                      child: Text('6 Months'),
-                    ),
-                    DropdownMenuItem(
-                      value: '1 Year',
-                      child: Text('1 Year (Best Value)'),
-                    ),
-                  ],
-                  onChanged: (val) => setState(() => selectedPlan = val!),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                    if (selectedCustomerId == null) ...[
+                      const SizedBox(height: 16),
                       Text(
-                        AppStrings.t('totalPriceColon', isAr),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        _planPrice(selectedPlan),
+                        AppStrings.t('pleaseSelectCustomer', isAr),
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ] else if (activeSub != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.15),
+                          border: Border.all(color: Colors.amber.shade700),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.amber.shade900,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                isAr
+                                    ? 'ملاحظة: العميل لديه اشتراك فعّال ينتهي بتاريخ ${DateFormat('yyyy-MM-dd').format(DateTime.parse(activeSub['endDate']).toLocal())}. سيتم تمديد الاشتراك الجديد تلقائياً ليبدأ من هذا التاريخ.'
+                                    : 'Note: Customer has an active subscription ending on ${DateFormat('yyyy-MM-dd').format(DateTime.parse(activeSub['endDate']).toLocal())}. The new subscription will automatically start from that date.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.amber.shade900,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: amountPaidController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: AppStrings.t('amountPaidNow', isAr),
-                    prefixIcon: const Icon(Icons.attach_money),
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: selectedPaymentMethod,
-                  decoration: InputDecoration(
-                    labelText: isAr ? 'طريقة الدفع' : 'Payment Method',
-                    prefixIcon: const Icon(Icons.payment),
-                    border: const OutlineInputBorder(),
-                  ),
-                  items: [
-                    DropdownMenuItem(value: 'Cash', child: Text(isAr ? 'كاش' : 'Cash')),
-                    DropdownMenuItem(value: 'Transfer', child: Text(isAr ? 'حوالة' : 'Transfer')),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: selectedPlan,
+                      decoration: InputDecoration(
+                        labelText: AppStrings.t('subPlan', isAr),
+                        prefixIcon: const Icon(Icons.calendar_today),
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: '1 Month',
+                          child: Text('1 Month'),
+                        ),
+                        DropdownMenuItem(
+                          value: '3 Months',
+                          child: Text('3 Months'),
+                        ),
+                        DropdownMenuItem(
+                          value: '6 Months',
+                          child: Text('6 Months'),
+                        ),
+                        DropdownMenuItem(
+                          value: '1 Year',
+                          child: Text('1 Year (Best Value)'),
+                        ),
+                      ],
+                      onChanged: (val) => setState(() => selectedPlan = val!),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            AppStrings.t('totalPriceColon', isAr),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            _planPrice(selectedPlan),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: amountPaidController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: AppStrings.t('amountPaidNow', isAr),
+                        prefixIcon: const Icon(Icons.attach_money),
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: selectedPaymentMethod,
+                      decoration: InputDecoration(
+                        labelText: isAr ? 'طريقة الدفع' : 'Payment Method',
+                        prefixIcon: const Icon(Icons.payment),
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'Cash',
+                          child: Text(isAr ? 'كاش' : 'Cash'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Transfer',
+                          child: Text(isAr ? 'حوالة' : 'Transfer'),
+                        ),
+                      ],
+                      onChanged: (val) =>
+                          setState(() => selectedPaymentMethod = val!),
+                    ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      title: Text(AppStrings.t('autoPrint', isAr)),
+                      value: _autoPrint,
+                      activeColor: Theme.of(context).colorScheme.primary,
+                      onChanged: (val) {
+                        _toggleAutoPrint(val);
+                        setState(() {});
+                      },
+                      contentPadding: EdgeInsets.zero,
+                    ),
                   ],
-                  onChanged: (val) => setState(() => selectedPaymentMethod = val!),
                 ),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  title: Text(AppStrings.t('autoPrint', isAr)),
-                  value: _autoPrint,
-                  activeColor: Theme.of(context).colorScheme.primary,
-                  onChanged: (val) {
-                    _toggleAutoPrint(val);
-                    setState(() {});
-                  },
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ],
+              ),
             ),
             actionsAlignment: MainAxisAlignment.spaceBetween,
-            actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            actionsPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
             actions: [
               TextButton(
                 style: TextButton.styleFrom(
@@ -235,8 +311,12 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                         if (selectedCustomerId == null) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             SnackBar(
-                              content: Text(AppStrings.t('pleaseSelectCustomer', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
+                              content: Text(
+                                AppStrings.t('pleaseSelectCustomer', isAr),
+                              ),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
                             ),
                           );
                           return;
@@ -246,8 +326,12 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                         if (paidText.isEmpty) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             SnackBar(
-                              content: Text(AppStrings.t('valAmountPaidRequired', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
+                              content: Text(
+                                AppStrings.t('valAmountPaidRequired', isAr),
+                              ),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
                             ),
                           );
                           return;
@@ -257,22 +341,32 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                         if (amountPaid == null || amountPaid < 0) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             SnackBar(
-                              content: Text(AppStrings.t('errorInvalidAmount', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
+                              content: Text(
+                                AppStrings.t('errorInvalidAmount', isAr),
+                              ),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
                             ),
                           );
                           return;
                         }
 
                         final months = _planToMonths(selectedPlan);
-                        final priceStr = _planPrice(selectedPlan).replaceAll('\$', '');
+                        final priceStr = _planPrice(
+                          selectedPlan,
+                        ).replaceAll('\$', '');
                         final totalAmount = double.tryParse(priceStr) ?? 0.0;
 
                         if (amountPaid > totalAmount) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             SnackBar(
-                              content: Text(AppStrings.t('valAmountPaidExceedsTotal', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
+                              content: Text(
+                                AppStrings.t('valAmountPaidExceedsTotal', isAr),
+                              ),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
                             ),
                           );
                           return;
@@ -303,7 +397,9 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                 isAr: isAr,
                                 title: AppStrings.t('receiptTitleSub', isAr),
                                 customerName: customerName,
-                                items: [{'name': selectedPlan, 'price': totalAmount}],
+                                items: [
+                                  {'name': selectedPlan, 'price': totalAmount},
+                                ],
                                 totalAmount: totalAmount,
                                 amountPaid: amountPaid,
                                 paymentMethod: selectedPaymentMethod,
@@ -318,19 +414,28 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                               builder: (dCtx) => AlertDialog(
                                 title: Row(
                                   children: [
-                                    Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary),
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
                                     const SizedBox(width: 8),
                                     Text(AppStrings.t('subSuccessAdd', isAr)),
                                   ],
                                 ),
-                                content: Text(AppStrings.t('subSuccessAdd', isAr)),
+                                content: Text(
+                                  AppStrings.t('subSuccessAdd', isAr),
+                                ),
                                 actions: [
                                   TextButton(
                                     onPressed: () {
                                       Navigator.pop(dCtx);
                                       doPrint();
                                     },
-                                    child: Text(AppStrings.t('printReceipt', isAr)),
+                                    child: Text(
+                                      AppStrings.t('printReceipt', isAr),
+                                    ),
                                   ),
                                   ElevatedButton(
                                     onPressed: () => Navigator.pop(dCtx),
@@ -478,8 +583,12 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                             horizontal: 24,
                             vertical: 16,
                           ),
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onPrimary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -583,23 +692,53 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                               if (_sortColumnIndex != null) {
                                 filteredSubs.sort((a, b) {
                                   if (_sortColumnIndex == 0) {
-                                    final aName = (a['customerName'] ?? '').toString();
-                                    final bName = (b['customerName'] ?? '').toString();
-                                    return _sortAscending ? aName.compareTo(bName) : bName.compareTo(aName);
+                                    final aName = (a['customerName'] ?? '')
+                                        .toString();
+                                    final bName = (b['customerName'] ?? '')
+                                        .toString();
+                                    return _sortAscending
+                                        ? aName.compareTo(bName)
+                                        : bName.compareTo(aName);
                                   } else if (_sortColumnIndex == 1) {
-                                    final aDate = DateTime.tryParse(a['startDate'] ?? '') ?? DateTime(1970);
-                                    final bDate = DateTime.tryParse(b['startDate'] ?? '') ?? DateTime(1970);
-                                    return _sortAscending ? aDate.compareTo(bDate) : bDate.compareTo(aDate);
+                                    final aDate =
+                                        DateTime.tryParse(
+                                          a['startDate'] ?? '',
+                                        ) ??
+                                        DateTime(1970);
+                                    final bDate =
+                                        DateTime.tryParse(
+                                          b['startDate'] ?? '',
+                                        ) ??
+                                        DateTime(1970);
+                                    return _sortAscending
+                                        ? aDate.compareTo(bDate)
+                                        : bDate.compareTo(aDate);
                                   } else if (_sortColumnIndex == 2) {
-                                    final aDate = DateTime.tryParse(a['endDate'] ?? '') ?? DateTime(1970);
-                                    final bDate = DateTime.tryParse(b['endDate'] ?? '') ?? DateTime(1970);
-                                    return _sortAscending ? aDate.compareTo(bDate) : bDate.compareTo(aDate);
+                                    final aDate =
+                                        DateTime.tryParse(a['endDate'] ?? '') ??
+                                        DateTime(1970);
+                                    final bDate =
+                                        DateTime.tryParse(b['endDate'] ?? '') ??
+                                        DateTime(1970);
+                                    return _sortAscending
+                                        ? aDate.compareTo(bDate)
+                                        : bDate.compareTo(aDate);
                                   } else if (_sortColumnIndex == 3) {
-                                    final aEndDate = DateTime.tryParse(a['endDate'] ?? '') ?? DateTime(1970);
-                                    final bEndDate = DateTime.tryParse(b['endDate'] ?? '') ?? DateTime(1970);
-                                    final aDays = aEndDate.difference(DateTime.now()).inDays;
-                                    final bDays = bEndDate.difference(DateTime.now()).inDays;
-                                    return _sortAscending ? aDays.compareTo(bDays) : bDays.compareTo(aDays);
+                                    final aEndDate =
+                                        DateTime.tryParse(a['endDate'] ?? '') ??
+                                        DateTime(1970);
+                                    final bEndDate =
+                                        DateTime.tryParse(b['endDate'] ?? '') ??
+                                        DateTime(1970);
+                                    final aDays = aEndDate
+                                        .difference(DateTime.now())
+                                        .inDays;
+                                    final bDays = bEndDate
+                                        .difference(DateTime.now())
+                                        .inDays;
+                                    return _sortAscending
+                                        ? aDays.compareTo(bDays)
+                                        : bDays.compareTo(aDays);
                                   }
                                   return 0;
                                 });
@@ -631,7 +770,18 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                 );
                               }
 
+                              final isMobile =
+                                  MediaQuery.of(context).size.width <= 800;
+                              if (isMobile) {
+                                return _buildMobileSubscriptionsList(
+                                  filteredSubs,
+                                  isAr,
+                                  context,
+                                );
+                              }
+
                               return DataTable2(
+                                showCheckboxColumn: false,
                                 sortColumnIndex: _sortColumnIndex,
                                 sortAscending: _sortAscending,
                                 columnSpacing: 16,
@@ -646,9 +796,8 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                   states,
                                 ) {
                                   if (states.contains(WidgetState.hovered))
-                                     return Theme.of(
-                                       context,
-                                     ).colorScheme.primary.withValues(alpha: 0.05);
+                                    return Theme.of(context).colorScheme.primary
+                                        .withValues(alpha: 0.05);
                                   return null;
                                 }),
                                 dividerThickness: 0.5,
@@ -662,11 +811,17 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                           AppStrings.t('subMemberName', isAr),
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                         if (_sortColumnIndex != 0)
-                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                          const Icon(
+                                            Icons.unfold_more,
+                                            size: 16,
+                                            color: Colors.grey,
+                                          ),
                                       ],
                                     ),
                                     size: ColumnSize.L,
@@ -680,11 +835,17 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                           AppStrings.t('subStartDate', isAr),
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                         if (_sortColumnIndex != 1)
-                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                          const Icon(
+                                            Icons.unfold_more,
+                                            size: 16,
+                                            color: Colors.grey,
+                                          ),
                                       ],
                                     ),
                                     size: ColumnSize.M,
@@ -698,11 +859,17 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                           AppStrings.t('subEndDate', isAr),
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                         if (_sortColumnIndex != 2)
-                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                          const Icon(
+                                            Icons.unfold_more,
+                                            size: 16,
+                                            color: Colors.grey,
+                                          ),
                                       ],
                                     ),
                                     size: ColumnSize.M,
@@ -716,11 +883,17 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                           AppStrings.t('daysLeft', isAr),
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                         if (_sortColumnIndex != 3)
-                                          const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
+                                          const Icon(
+                                            Icons.unfold_more,
+                                            size: 16,
+                                            color: Colors.grey,
+                                          ),
                                       ],
                                     ),
                                     size: ColumnSize.M,
@@ -752,26 +925,54 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                   final isExpired = daysLeft < 0;
                                   final isWarning =
                                       daysLeft >= 0 && daysLeft <= 7;
+                                  final String statusText = isExpired
+                                      ? AppStrings.t('subExpired', isAr)
+                                      : (isWarning
+                                            ? AppStrings.t(
+                                                'dashExpiringSoon',
+                                                isAr,
+                                              )
+                                            : AppStrings.t('subActive', isAr));
+                                  final Color statusColor = isExpired
+                                      ? Theme.of(context).colorScheme.error
+                                      : (isWarning
+                                            ? Colors.orange
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.primary);
 
                                   return DataRow(
+                                    onSelectChanged: (selected) {
+                                      if (selected == true) {
+                                        _showSubscriptionDetails(
+                                          context,
+                                          sub,
+                                          isAr,
+                                          statusText,
+                                          statusColor,
+                                          daysLeft,
+                                        );
+                                      }
+                                    },
                                     cells: [
                                       DataCell(
                                         Row(
                                           children: [
                                             CircleAvatar(
                                               radius: 16,
-                                               backgroundColor: Theme.of(
-                                                 context,
-                                               ).colorScheme.primary.withValues(alpha: 0.1),
+                                              backgroundColor: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                                  .withValues(alpha: 0.1),
                                               child: Text(
                                                 (sub['customerName']
                                                             as String? ??
                                                         'U')[0]
                                                     .toUpperCase(),
                                                 style: TextStyle(
-                                                   color: Theme.of(
-                                                     context,
-                                                   ).colorScheme.primary,
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.bold,
                                                 ),
@@ -814,10 +1015,15 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                       DataCell(
                                         FittedBox(
                                           fit: BoxFit.scaleDown,
-                                          alignment: isAr ? Alignment.centerRight : Alignment.centerLeft,
+                                          alignment: isAr
+                                              ? Alignment.centerRight
+                                              : Alignment.centerLeft,
                                           child: Text(
                                             isExpired
-                                                ? AppStrings.t('subExpired', isAr)
+                                                ? AppStrings.t(
+                                                    'subExpired',
+                                                    isAr,
+                                                  )
                                                 : '$daysLeft ${AppStrings.t('days', isAr)}',
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
@@ -850,8 +1056,8 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                                           ).colorScheme.error
                                                         : Theme.of(
                                                             context,
-                                                           ).colorScheme.primary)
-                                                     .withValues(alpha: 0.1),
+                                                          ).colorScheme.primary)
+                                                    .withValues(alpha: 0.1),
                                             borderRadius: BorderRadius.circular(
                                               8,
                                             ),
@@ -862,10 +1068,15 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                                     'subExpired',
                                                     isAr,
                                                   )
-                                                : AppStrings.t(
-                                                    'subActive',
-                                                    isAr,
-                                                  ),
+                                                : (isWarning
+                                                      ? AppStrings.t(
+                                                          'dashExpiringSoon',
+                                                          isAr,
+                                                        )
+                                                      : AppStrings.t(
+                                                          'subActive',
+                                                          isAr,
+                                                        )),
                                             style: TextStyle(
                                               color: isExpired
                                                   ? Theme.of(
@@ -885,70 +1096,180 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             IconButton(
-                                              icon: const Icon(Icons.print, size: 20),
-                                              tooltip: AppStrings.t('printReceipt', isAr),
+                                              icon: const Icon(
+                                                Icons.print,
+                                                size: 20,
+                                              ),
+                                              tooltip: AppStrings.t(
+                                                'printReceipt',
+                                                isAr,
+                                              ),
                                               onPressed: () {
-                                                final mTotalAmount = double.tryParse(sub['totalAmount']?.toString() ?? '0') ?? 0.0;
-                                                final mAmountPaid = double.tryParse(sub['amountPaid']?.toString() ?? '0') ?? 0.0;
-                                                
-                                                final subStart = DateTime.parse(sub['startDate']);
-                                                final subEnd = DateTime.parse(sub['endDate']);
-                                                final diffMonths = (subEnd.difference(subStart).inDays / 30).round();
-                                                final planStr = isAr ? 'اشتراك $diffMonths شهر' : '$diffMonths Months';
+                                                final mTotalAmount =
+                                                    double.tryParse(
+                                                      sub['totalAmount']
+                                                              ?.toString() ??
+                                                          '0',
+                                                    ) ??
+                                                    0.0;
+                                                final mAmountPaid =
+                                                    double.tryParse(
+                                                      sub['amountPaid']
+                                                              ?.toString() ??
+                                                          '0',
+                                                    ) ??
+                                                    0.0;
+
+                                                final subStart = DateTime.parse(
+                                                  sub['startDate'],
+                                                );
+                                                final subEnd = DateTime.parse(
+                                                  sub['endDate'],
+                                                );
+                                                final diffMonths =
+                                                    (subEnd
+                                                                .difference(
+                                                                  subStart,
+                                                                )
+                                                                .inDays /
+                                                            30)
+                                                        .round();
+                                                final planStr = isAr
+                                                    ? 'اشتراك $diffMonths شهر'
+                                                    : '$diffMonths Months';
 
                                                 PrintService.printReceipt(
                                                   isAr: isAr,
-                                                  title: AppStrings.t('receiptTitleSub', isAr),
-                                                  customerName: sub['customerName'] ?? '',
-                                                  items: [{'name': planStr, 'price': mTotalAmount}],
+                                                  title: AppStrings.t(
+                                                    'receiptTitleSub',
+                                                    isAr,
+                                                  ),
+                                                  customerName:
+                                                      sub['customerName'] ?? '',
+                                                  items: [
+                                                    {
+                                                      'name': planStr,
+                                                      'price': mTotalAmount,
+                                                    },
+                                                  ],
                                                   totalAmount: mTotalAmount,
                                                   amountPaid: mAmountPaid,
-                                                  paymentMethod: sub['paymentMethod'] ?? (isAr ? 'كاش' : 'Cash'),
+                                                  paymentMethod:
+                                                      sub['paymentMethod'] ??
+                                                      (isAr ? 'كاش' : 'Cash'),
                                                   date: subStart,
                                                 );
                                               },
                                             ),
                                             if (!isExpired)
                                               IconButton(
-                                                icon: Icon(Icons.cancel, size: 20, color: Theme.of(context).colorScheme.error),
-                                                tooltip: isAr ? 'إلغاء الاشتراك' : 'Cancel Subscription',
+                                                icon: Icon(
+                                                  Icons.cancel,
+                                                  size: 20,
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.error,
+                                                ),
+                                                tooltip: isAr
+                                                    ? 'إلغاء الاشتراك'
+                                                    : 'Cancel Subscription',
                                                 onPressed: () async {
                                                   final confirm = await showDialog<bool>(
                                                     context: context,
                                                     builder: (ctx) => AlertDialog(
-                                                      title: Text(isAr ? 'تأكيد إلغاء الاشتراك' : 'Confirm Cancellation'),
-                                                      content: Text(isAr 
-                                                        ? 'هل أنت متأكد من إلغاء هذا الاشتراك؟ سيمكنك بعدها حذف العميل إذا لم يكن لديه سجلات أخرى.' 
-                                                        : 'Are you sure you want to cancel this subscription? You can then delete the customer if they have no other records.'),
+                                                      title: Text(
+                                                        isAr
+                                                            ? 'تأكيد إلغاء الاشتراك'
+                                                            : 'Confirm Cancellation',
+                                                      ),
+                                                      content: Text(
+                                                        isAr
+                                                            ? 'هل أنت متأكد من إلغاء هذا الاشتراك؟ سيمكنك بعدها حذف العميل إذا لم يكن لديه سجلات أخرى.'
+                                                            : 'Are you sure you want to cancel this subscription? You can then delete the customer if they have no other records.',
+                                                      ),
                                                       actions: [
                                                         TextButton(
-                                                          onPressed: () => Navigator.pop(ctx, false),
-                                                          child: Text(AppStrings.t('cancel', isAr)),
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                ctx,
+                                                                false,
+                                                              ),
+                                                          child: Text(
+                                                            AppStrings.t(
+                                                              'cancel',
+                                                              isAr,
+                                                            ),
+                                                          ),
                                                         ),
                                                         ElevatedButton(
                                                           style: ElevatedButton.styleFrom(
-                                                            backgroundColor: Theme.of(context).colorScheme.error,
-                                                            foregroundColor: Theme.of(context).colorScheme.onError,
+                                                            backgroundColor:
+                                                                Theme.of(
+                                                                      context,
+                                                                    )
+                                                                    .colorScheme
+                                                                    .error,
+                                                            foregroundColor:
+                                                                Theme.of(
+                                                                      context,
+                                                                    )
+                                                                    .colorScheme
+                                                                    .onError,
                                                           ),
-                                                          onPressed: () => Navigator.pop(ctx, true),
-                                                          child: Text(isAr ? 'إلغاء الاشتراك' : 'Cancel Subscription'),
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                ctx,
+                                                                true,
+                                                              ),
+                                                          child: Text(
+                                                            isAr
+                                                                ? 'إلغاء الاشتراك'
+                                                                : 'Cancel Subscription',
+                                                          ),
                                                         ),
                                                       ],
                                                     ),
                                                   );
-                                                  
+
                                                   if (confirm == true) {
                                                     try {
-                                                      await ref.read(subscriptionProvider.notifier).cancelSubscription(sub['id']);
+                                                      await ref
+                                                          .read(
+                                                            subscriptionProvider
+                                                                .notifier,
+                                                          )
+                                                          .cancelSubscription(
+                                                            sub['id'],
+                                                          );
                                                       if (context.mounted) {
-                                                        ScaffoldMessenger.of(context).showSnackBar(
-                                                          SnackBar(content: Text(isAr ? 'تم إلغاء الاشتراك بنجاح' : 'Subscription cancelled successfully')),
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              isAr
+                                                                  ? 'تم إلغاء الاشتراك بنجاح'
+                                                                  : 'Subscription cancelled successfully',
+                                                            ),
+                                                          ),
                                                         );
                                                       }
                                                     } catch (e) {
                                                       if (context.mounted) {
-                                                        ScaffoldMessenger.of(context).showSnackBar(
-                                                          SnackBar(content: Text('Error: $e'), backgroundColor: Theme.of(context).colorScheme.error),
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              'Error: $e',
+                                                            ),
+                                                            backgroundColor:
+                                                                Theme.of(
+                                                                      context,
+                                                                    )
+                                                                    .colorScheme
+                                                                    .error,
+                                                          ),
                                                         );
                                                       }
                                                     }
@@ -996,55 +1317,58 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
               : (AppStrings.t('notSet', isAr));
           return AlertDialog(
             title: Text(AppStrings.t('customerAddNew', isAr)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: AppStrings.t('customerName', isAr),
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  maxLength: 9,
-                  decoration: InputDecoration(
-                    labelText: AppStrings.t('customerPhone', isAr),
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ListTile(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+            content: SizedBox(
+              width: 450,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: AppStrings.t('customerName', isAr),
+                      border: const OutlineInputBorder(),
                     ),
                   ),
-                  leading: Icon(
-                    Icons.calendar_today,
-                    color: Theme.of(context).colorScheme.primary,
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: phoneController,
+                    keyboardType: TextInputType.phone,
+                    maxLength: 9,
+                    decoration: InputDecoration(
+                      labelText: AppStrings.t('customerPhone', isAr),
+                      border: const OutlineInputBorder(),
+                    ),
                   ),
-                  title: Text(AppStrings.t('customerDOB', isAr)),
-                  subtitle: Text(
-                    dobStr,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    leading: Icon(
+                      Icons.calendar_today,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: Text(AppStrings.t('customerDOB', isAr)),
+                    subtitle: Text(
+                      dobStr,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    trailing: const Icon(Icons.edit, size: 18),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: ctx,
+                        initialDate: DateTime(2000),
+                        firstDate: DateTime(1900),
+                        lastDate: DateTime.now(),
+                      );
+                      if (date != null) setState(() => selectedDob = date);
+                    },
                   ),
-                  trailing: const Icon(Icons.edit, size: 18),
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: ctx,
-                      initialDate: DateTime(2000),
-                      firstDate: DateTime(1900),
-                      lastDate: DateTime.now(),
-                    );
-                    if (date != null) setState(() => selectedDob = date);
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
             actions: [
               TextButton(
@@ -1061,8 +1385,26 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                         if (name.isEmpty) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             SnackBar(
-                              content: Text(AppStrings.t('valNameRequired', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
+                              content: Text(
+                                AppStrings.t('valNameRequired', isAr),
+                              ),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (!FormValidators.isValidName(name)) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                AppStrings.t('valNameInvalid', isAr),
+                              ),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
                             ),
                           );
                           return;
@@ -1071,8 +1413,12 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                         if (phone.isEmpty) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             SnackBar(
-                              content: Text(AppStrings.t('valPhoneRequired', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
+                              content: Text(
+                                AppStrings.t('valPhoneRequired', isAr),
+                              ),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
                             ),
                           );
                           return;
@@ -1082,8 +1428,12 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                         if (!yemenPhoneRegex.hasMatch(phone)) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             SnackBar(
-                              content: Text(AppStrings.t('valPhoneInvalidYemen', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
+                              content: Text(
+                                AppStrings.t('valPhoneInvalidYemen', isAr),
+                              ),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
                             ),
                           );
                           return;
@@ -1092,8 +1442,12 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                         if (selectedDob == null) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             SnackBar(
-                              content: Text(AppStrings.t('valDobRequired', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
+                              content: Text(
+                                AppStrings.t('valDobRequired', isAr),
+                              ),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
                             ),
                           );
                           return;
@@ -1103,11 +1457,7 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                         try {
                           await ref
                               .read(customersProvider.notifier)
-                              .addCustomer(
-                                name,
-                                phone,
-                                selectedDob,
-                              );
+                              .addCustomer(name, phone, selectedDob);
                           if (ctx.mounted) Navigator.pop(ctx);
                         } catch (e) {
                           setState(() => isLoading = false);
@@ -1129,5 +1479,429 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
         },
       ),
     );
+  }
+
+  Widget _buildMobileSubscriptionsList(
+    List<dynamic> subs,
+    bool isAr,
+    BuildContext context,
+  ) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: subs.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final sub = subs[index];
+        final endDate = DateTime.parse(sub['endDate']);
+        final daysLeft = endDate.difference(DateTime.now()).inDays;
+        final isExpired = daysLeft < 0;
+        final isWarning = daysLeft >= 0 && daysLeft <= 7;
+
+        final String statusText = isExpired
+            ? AppStrings.t('subExpired', isAr)
+            : (isWarning
+                  ? AppStrings.t('dashExpiringSoon', isAr)
+                  : AppStrings.t('subActive', isAr));
+
+        final Color statusColor = isExpired
+            ? Theme.of(context).colorScheme.error
+            : (isWarning
+                  ? Colors.orange
+                  : Theme.of(context).colorScheme.primary);
+
+        return Card(
+          margin: EdgeInsets.zero,
+          elevation: 0,
+          color: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+            ),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _showSubscriptionDetails(
+              context,
+              sub,
+              isAr,
+              statusText,
+              statusColor,
+              daysLeft,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.1),
+                    child: Text(
+                      (sub['customerName'] as String? ?? 'U')[0].toUpperCase(),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          sub['customerName'] ?? '',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today,
+                              size: 14,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${endDate.day}/${endDate.month}/${endDate.year}',
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      statusText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: statusColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showSubscriptionDetails(
+    BuildContext context,
+    dynamic sub,
+    bool isAr,
+    String statusText,
+    Color statusColor,
+    int daysLeft,
+  ) {
+    final startDate = DateTime.parse(sub['startDate']);
+    final endDate = DateTime.parse(sub['endDate']);
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: false,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(ctx).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: Theme.of(ctx).dividerColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // Header
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: Theme.of(
+                        ctx,
+                      ).colorScheme.primary.withValues(alpha: 0.1),
+                      child: Text(
+                        (sub['customerName'] as String? ?? 'U')[0]
+                            .toUpperCase(),
+                        style: TextStyle(
+                          color: Theme.of(ctx).colorScheme.primary,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            sub['customerName'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${AppStrings.t('customerPhone', isAr)}: ${sub['customer']?['phone'] ?? sub['customerPhone'] ?? ''}',
+                            style: TextStyle(
+                              color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          if (sub['customer'] != null &&
+                              sub['customer']['fingerprintId'] != null &&
+                              sub['customer']['fingerprintId']
+                                  .toString()
+                                  .isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                '${isAr ? 'رقم المشترك' : 'Subscriber ID'}: ${sub['customer']['fingerprintId']}',
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    ctx,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+
+                // Details
+                _buildDetailRow(
+                  ctx,
+                  AppStrings.t('subStartDate', isAr),
+                  '${startDate.day}/${startDate.month}/${startDate.year}',
+                ),
+                const Divider(),
+                _buildDetailRow(
+                  ctx,
+                  AppStrings.t('subEndDate', isAr),
+                  '${endDate.day}/${endDate.month}/${endDate.year}',
+                ),
+                const Divider(),
+                _buildDetailRow(
+                  ctx,
+                  AppStrings.t('daysLeft', isAr),
+                  daysLeft < 0 ? '0' : '$daysLeft',
+                  isAmount: true,
+                ),
+                const Divider(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        AppStrings.t('subStatus', isAr),
+                        style: TextStyle(
+                          color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          statusText,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Actions
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _printSubscription(sub, isAr);
+                        },
+                        icon: const Icon(Icons.print),
+                        label: Text(AppStrings.t('printReceipt', isAr)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _cancelSubscription(sub, isAr);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(ctx).colorScheme.error,
+                          foregroundColor: Theme.of(ctx).colorScheme.onError,
+                        ),
+                        icon: const Icon(Icons.cancel),
+                        label: Text(AppStrings.t('cancelSubscription', isAr)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(
+    BuildContext context,
+    String label,
+    String value, {
+    bool isAmount = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 16,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: isAmount ? 20 : 16,
+              color: isAmount ? Theme.of(context).colorScheme.primary : null,
+              fontFamily: isAmount ? 'JetBrains Mono' : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _printSubscription(dynamic sub, bool isAr) {
+    final mTotalAmount =
+        double.tryParse(sub['totalAmount']?.toString() ?? '0') ?? 0.0;
+    final mAmountPaid =
+        double.tryParse(sub['amountPaid']?.toString() ?? '0') ?? 0.0;
+    final subStart = DateTime.parse(sub['startDate']);
+    final subEnd = DateTime.parse(sub['endDate']);
+    final diffMonths = (subEnd.difference(subStart).inDays / 30).round();
+    final planStr = isAr ? 'اشتراك $diffMonths شهر' : '$diffMonths Months';
+
+    PrintService.printReceipt(
+      isAr: isAr,
+      title: AppStrings.t('receiptTitleSub', isAr),
+      customerName: sub['customerName'] ?? '',
+      items: [
+        {'name': planStr, 'price': mTotalAmount},
+      ],
+      totalAmount: mTotalAmount,
+      amountPaid: mAmountPaid,
+      paymentMethod: sub['paymentMethod'] ?? (isAr ? 'كاش' : 'Cash'),
+      date: subStart,
+    );
+  }
+
+  Future<void> _cancelSubscription(dynamic sub, bool isAr) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isAr ? 'تأكيد إلغاء الاشتراك' : 'Confirm Cancellation'),
+        content: Text(
+          isAr
+              ? 'هل أنت متأكد من إلغاء هذا الاشتراك؟ سيمكنك بعدها حذف العميل إذا لم يكن لديه سجلات أخرى.'
+              : 'Are you sure you want to cancel this subscription? You can then delete the customer if they have no other records.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(AppStrings.t('cancel', isAr)),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(AppStrings.t('delete', isAr)), // Or cancel
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await ref
+            .read(subscriptionProvider.notifier)
+            .cancelSubscription(sub['id']);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
+    }
   }
 }

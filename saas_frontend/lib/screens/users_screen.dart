@@ -564,6 +564,13 @@ class UsersScreen extends ConsumerWidget {
                             Icons.card_membership,
                             setState,
                           ),
+                        if (!isChalet)
+                          buildPermissionCheckbox(
+                            'canAccessCheckin',
+                            s('navCheckin'),
+                            Icons.fingerprint,
+                            setState,
+                          ),
                         buildPermissionCheckbox(
                           'canAccessUsers',
                           s('navUsers'),
@@ -692,6 +699,11 @@ class UsersScreen extends ConsumerWidget {
             'canAccessSettings': true,
           },
     );
+
+    // FIX: If the backend did not return 'canAccessCheckin', assume true as the default.
+    if (!permissions.containsKey('canAccessCheckin')) {
+      permissions['canAccessCheckin'] = true;
+    }
 
     if (isChalet) {
       permissions['canAccessSubscriptions'] = false;
@@ -862,6 +874,13 @@ class UsersScreen extends ConsumerWidget {
                             Icons.card_membership,
                             setState,
                           ),
+                        if (!isChalet)
+                          buildPermissionCheckbox(
+                            'canAccessCheckin',
+                            s('navCheckin'),
+                            Icons.fingerprint,
+                            setState,
+                          ),
                         buildPermissionCheckbox(
                           'canAccessUsers',
                           s('navUsers'),
@@ -920,7 +939,12 @@ class UsersScreen extends ConsumerWidget {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(s('usersUpdated')),
+                                content: Text(
+                                  s('usersUpdated'),
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onPrimary,
+                                  ),
+                                ),
                                 backgroundColor: Theme.of(
                                   context,
                                 ).colorScheme.primary,

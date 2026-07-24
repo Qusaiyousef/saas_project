@@ -35,13 +35,13 @@ class AppDrawer extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
               ),
               child: Column(
                 children: [
                   CircleAvatar(
                     radius: 32,
-                    backgroundColor: Theme.of(context).primaryColor.withOpacity(0.2),
+                    backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                     backgroundImage: const AssetImage('assets/app_icon.png'),
                   ),
                   const SizedBox(height: 12),

@@ -472,7 +472,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen>
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: theme.colorScheme.primary.withOpacity(0.4),
+                            color: theme.colorScheme.primary.withValues(alpha: 0.4),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           )
@@ -539,7 +539,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen>
       child: Column(
         children: [
           Icon(Icons.how_to_reg_outlined,
-              size: 72, color: theme.colorScheme.outline.withOpacity(0.4)),
+              size: 72, color: theme.colorScheme.outline.withValues(alpha: 0.4)),
           const SizedBox(height: 16),
           Text(
             isAr
@@ -626,7 +626,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen>
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: cardColor.withOpacity(0.5),
+                color: cardColor.withValues(alpha: 0.5),
                 blurRadius: 20,
                 offset: const Offset(0, 6),
               )
@@ -657,7 +657,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -766,11 +766,11 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen>
       children: [
         Row(
           children: [
-            Icon(icon, size: 16, color: textColor.withOpacity(0.8)),
+            Icon(icon, size: 16, color: textColor.withValues(alpha: 0.8)),
             const SizedBox(width: 6),
             Text(label,
                 style: TextStyle(
-                    color: textColor.withOpacity(0.85), fontSize: 13)),
+                    color: textColor.withValues(alpha: 0.85), fontSize: 13)),
           ],
         ),
         Text(

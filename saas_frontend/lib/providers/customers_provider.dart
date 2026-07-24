@@ -22,6 +22,17 @@ class CustomersNotifier extends AsyncNotifier<List<dynamic>> {
   Future<void> addCustomer(String name, String? phone, DateTime? dob) async {
     final dio = ref.read(dioProvider);
 
+    final currentCustomers = state.asData?.value ?? [];
+    if (phone != null && phone.trim().isNotEmpty) {
+      final existing = currentCustomers.firstWhere(
+        (c) => c['phone']?.toString().trim() == phone.trim(),
+        orElse: () => null,
+      );
+      if (existing != null) {
+        throw Exception('رقم الهاتف هذا مسجل بالفعل لعميل آخر.');
+      }
+    }
+
     try {
       await dio.post('/customers', data: {
         'name': name,

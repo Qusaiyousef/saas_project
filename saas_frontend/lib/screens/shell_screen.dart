@@ -80,7 +80,9 @@ List<NavItem> buildNavItems(
         AppStrings.t('navSubscriptions', isAr),
       ),
     );
-    // Check-In: يظهر فقط للمسبح والجيم
+  }
+  if ((type == TenantType.gym || type == TenantType.pool) &&
+      hasPerm('canAccessCheckin')) {
     items.add(
       NavItem(
         '/checkin',
@@ -202,12 +204,14 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
               ? _buildMobileDrawer(navItems, location, context, isAr)
               : null,
           body: isMobile
-              ? Column(
-                  children: [
-                    _buildMobileAppBar(hasAlert, context, isAr, expiredBookings, expiredSubs),
-                    Expanded(child: widget.child),
-                    _buildBottomBar(bottomNavItems, location, context),
-                  ],
+              ? SafeArea(
+                  child: Column(
+                    children: [
+                      _buildMobileAppBar(hasAlert, context, isAr, expiredBookings, expiredSubs),
+                      Expanded(child: widget.child),
+                      _buildBottomBar(bottomNavItems, location, context),
+                    ],
+                  ),
                 )
               : Row(
                   children: [
@@ -217,6 +221,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                       context,
                       tenantType,
                       role,
+                      isAr,
                     ),
                     Expanded(
                       child: Column(
@@ -239,6 +244,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     BuildContext context,
     TenantType tenantType,
     String? role,
+    bool isAr,
   ) {
     final tenantLabel = tenantType.name;
     final roleLabel = role == 'Admin' ? 'Admin' : 'Employee';
@@ -310,8 +316,8 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                 // Primary CTA
                 ElevatedButton.icon(
                   onPressed: () => context.go('/pos'),
-                  icon: const Icon(Icons.add_circle),
-                  label: const Text('New Booking'),
+                  icon: const Icon(Icons.add),
+                  label: Text(AppStrings.t('dashNewBooking', isAr)),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
@@ -326,7 +332,12 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: InkWell(
-                          onTap: () => context.go(item.path),
+                          onTap: () {
+                            if (context.canPop()) {
+                              context.pop();
+                            }
+                            context.go(item.path);
+                          },
                           borderRadius: BorderRadius.circular(8),
                           child: Container(
                             decoration: BoxDecoration(
@@ -442,7 +453,9 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                       ),
                       selected: isSelected,
                       onTap: () {
-                        Navigator.pop(context);
+                        if (context.canPop()) {
+                          context.pop();
+                        }
                         context.go(item.path);
                       },
                     );
@@ -626,68 +639,24 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     String location,
     BuildContext context,
   ) {
-    final colors = Theme.of(context).colorScheme;
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          color: Theme.of(context).cardColor.withValues(alpha: 0.9),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: List.generate(items.length, (index) {
-                  final item = items[index];
-                  final isSelected = location.startsWith(item.path);
-                  final color = isSelected
-                      ? colors.primary
-                      : colors.onSurfaceVariant;
+    int selectedIndex = items.indexWhere((item) => location.startsWith(item.path));
+    if (selectedIndex == -1) selectedIndex = 0;
 
-                  return InkWell(
-                    onTap: () => context.go(item.path),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: isSelected
-                          ? BoxDecoration(
-                              color: colors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(16),
-                            )
-                          : null,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isSelected ? item.selectedIcon : item.icon,
-                            color: color,
-                            size: 24,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            item.label,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: color,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return NavigationBar(
+      selectedIndex: selectedIndex,
+      onDestinationSelected: (index) {
+        if (context.canPop()) {
+          context.pop();
+        }
+        context.go(items[index].path);
+      },
+      destinations: items.map((item) {
+        return NavigationDestination(
+          icon: Icon(item.icon),
+          selectedIcon: Icon(item.selectedIcon),
+          label: item.label,
+        );
+      }).toList(),
     );
   }
 }

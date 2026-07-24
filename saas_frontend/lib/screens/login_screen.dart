@@ -21,9 +21,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscurePassword = true;
 
   void _showServerSetupDialog() {
-    final s = (String key) => AppStrings.t(key, ref.read(isArabicProvider));
+    String s(String key) => AppStrings.t(key, ref.read(isArabicProvider));
     final controller = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) {
@@ -46,12 +46,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 try {
                   final code = controller.text.trim();
                   if (code.isEmpty) return;
-                  
+
                   final decodedUrl = utf8.decode(base64Decode(code));
-                  if (!decodedUrl.startsWith('http')) throw Exception('Invalid');
-                  
+                  if (!decodedUrl.startsWith('http'))
+                    throw Exception('Invalid');
+
                   await ref.read(apiUrlProvider.notifier).updateUrl(decodedUrl);
-                  
+
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -82,7 +83,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isAr = ref.watch(isArabicProvider);
-    final s = (String key) => AppStrings.t(key, isAr);
+    String s(String key) => AppStrings.t(key, isAr);
 
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.error != null) {
@@ -137,7 +138,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(width: 8),
                         InkWell(
-                          onTap: () => ref.read(localeProvider.notifier).toggle(),
+                          onTap: () =>
+                              ref.read(localeProvider.notifier).toggle(),
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
                             padding: const EdgeInsets.symmetric(

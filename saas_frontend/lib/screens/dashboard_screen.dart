@@ -39,10 +39,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err')),
         data: (bookings) {
+          final validBookings = bookings.where((b) => b['status'] != 1 && b['status'] != 'Cancelled').toList();
           final now = DateTime.now();
           final today = DateTime(now.year, now.month, now.day);
 
-          final List<Map<String, dynamic>> todayBookings = bookings
+          final List<Map<String, dynamic>> todayBookings = validBookings
               .where((b) {
                 final dt = DateTime.parse(b['startTime']).toLocal();
                 return dt.year == today.year &&
@@ -53,14 +54,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               .toList();
 
           final todayCount = todayBookings.length;
-          final totalRev = bookings.fold<double>(
+          final totalRev = validBookings.fold<double>(
             0,
             (sum, b) => sum + ((b['totalAmount'] as num?)?.toDouble() ?? 0),
           );
 
           // Calculate Occupancy (Percentage of days booked this month)
           final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
-          final bookedDaysThisMonth = bookings.where((b) {
+          final bookedDaysThisMonth = validBookings.where((b) {
             final dt = DateTime.parse(b['startTime']).toLocal();
             return dt.year == now.year && dt.month == now.month;
           }).map((b) => DateTime.parse(b['startTime']).toLocal().day).toSet().length;
@@ -76,7 +77,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             final int daysSinceMonday = now.weekday - 1;
             final startOfWeek = DateTime(now.year, now.month, now.day).subtract(Duration(days: daysSinceMonday));
             
-            for (final b in bookings) {
+            for (final b in validBookings) {
               final dt = DateTime.parse(b['startTime']).toLocal();
               if (!dt.isBefore(startOfWeek) && dt.isBefore(startOfWeek.add(const Duration(days: 7)))) {
                 final dayIndex = dt.weekday - 1;
@@ -89,7 +90,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             final startOfMonth = DateTime(now.year, now.month, 1);
             final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
             
-            for (final b in bookings) {
+            for (final b in validBookings) {
               final dt = DateTime.parse(b['startTime']).toLocal();
               if (!dt.isBefore(startOfMonth) && !dt.isAfter(endOfMonth)) {
                 int weekIndex = (dt.day - 1) ~/ 7;
@@ -101,7 +102,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             chartData = List.filled(12, 0.0);
             chartLabels = const ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             
-            for (final b in bookings) {
+            for (final b in validBookings) {
               final dt = DateTime.parse(b['startTime']).toLocal();
               if (dt.year == now.year) {
                 final monthIndex = dt.month - 1;

@@ -16,6 +16,29 @@ public class SubscriptionService : ISubscriptionService
 
     public async Task<Subscription> CreateSubscriptionAsync(Subscription subscription)
     {
+        if (subscription.CustomerId.HasValue)
+        {
+            var activeSub = await _context.Subscriptions
+                .Where(s => s.CustomerId == subscription.CustomerId.Value 
+                         && s.TenantId == subscription.TenantId 
+                         && s.Status == SubscriptionStatus.Active 
+                         && s.EndDate > DateTime.UtcNow)
+                .OrderByDescending(s => s.EndDate)
+                .FirstOrDefaultAsync();
+
+            if (activeSub != null)
+            {
+                var duration = subscription.EndDate - subscription.StartDate;
+                if (duration <= TimeSpan.Zero)
+                {
+                    duration = TimeSpan.FromDays(30);
+                }
+
+                subscription.StartDate = activeSub.EndDate;
+                subscription.EndDate = activeSub.EndDate.Add(duration);
+            }
+        }
+
         subscription.Status = SubscriptionStatus.Active;
         _context.Subscriptions.Add(subscription);
         
@@ -41,6 +64,7 @@ public class SubscriptionService : ISubscriptionService
     {
         // Return all subscriptions for this resource (tenant filter applied automatically via global filter)
         return await _context.Subscriptions
+            .Include(s => s.Customer)
             .Where(s => s.ResourceId == resourceId && s.Status == SubscriptionStatus.Active)
             .OrderByDescending(s => s.StartDate)
             .ToListAsync();

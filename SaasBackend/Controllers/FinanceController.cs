@@ -83,10 +83,12 @@ public class FinanceController : ControllerBase
                     Id = b.Id,
                     Date = b.StartTime,
                     CustomerName = b.CustomerName,
+                    FingerprintId = b.Customer != null ? b.Customer.FingerprintId : null,
                     Type = "Booking",
                     Description = b.IsFullDayBlock ? "Full Day Booking" : "Hourly Booking",
                     Amount = b.AmountPaid,
-                    Method = b.PaymentMethod
+                    Method = b.PaymentMethod,
+                    Status = b.Status.ToString()
                 })
                 .AsNoTracking()
                 .ToListAsync();
@@ -98,10 +100,12 @@ public class FinanceController : ControllerBase
                     Id = s.Id,
                     Date = s.StartDate,
                     CustomerName = s.CustomerName,
+                    FingerprintId = s.Customer != null ? s.Customer.FingerprintId : null,
                     Type = "Subscription",
                     Description = "Membership Plan",
                     Amount = s.AmountPaid,
-                    Method = s.PaymentMethod
+                    Method = s.PaymentMethod,
+                    Status = s.Status.ToString()
                 })
                 .AsNoTracking()
                 .ToListAsync();

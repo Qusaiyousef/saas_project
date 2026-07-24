@@ -76,7 +76,8 @@ public class UsersController : ControllerBase
                     canAccessUsers = permissions?.CanAccessUsers ?? (role != "Employee"),
                     canAccessFinance = permissions?.CanAccessFinance ?? (role != "Employee"),
                     canAccessCustomers = permissions?.CanAccessCustomers ?? true,
-                    canAccessSettings = permissions?.CanAccessSettings ?? true
+                    canAccessSettings = permissions?.CanAccessSettings ?? true,
+                    canAccessCheckin = permissions?.CanAccessCheckin ?? true
                 }
             });
         }
@@ -140,7 +141,8 @@ public class UsersController : ControllerBase
             CanAccessUsers = request.Permissions?.CanAccessUsers ?? (role != "Employee"),
             CanAccessFinance = request.Permissions?.CanAccessFinance ?? (role != "Employee"),
             CanAccessCustomers = request.Permissions?.CanAccessCustomers ?? true,
-            CanAccessSettings = request.Permissions?.CanAccessSettings ?? true
+            CanAccessSettings = request.Permissions?.CanAccessSettings ?? true,
+            CanAccessCheckin = request.Permissions?.CanAccessCheckin ?? true
         };
         _context.UserPagePermissions.Add(permissions);
         await _context.SaveChangesAsync();
@@ -161,7 +163,8 @@ public class UsersController : ControllerBase
                 canAccessUsers = permissions.CanAccessUsers,
                 canAccessFinance = permissions.CanAccessFinance,
                 canAccessCustomers = permissions.CanAccessCustomers,
-                canAccessSettings = permissions.CanAccessSettings
+                canAccessSettings = permissions.CanAccessSettings,
+                canAccessCheckin = permissions.CanAccessCheckin
             }
         });
     }
@@ -256,6 +259,7 @@ public class UsersController : ControllerBase
             permissions.CanAccessFinance = request.Permissions.CanAccessFinance;
             permissions.CanAccessCustomers = request.Permissions.CanAccessCustomers;
             permissions.CanAccessSettings = request.Permissions.CanAccessSettings;
+            permissions.CanAccessCheckin = request.Permissions.CanAccessCheckin;
             await _context.SaveChangesAsync();
         }
 
@@ -382,7 +386,8 @@ public class UsersController : ControllerBase
                     CanAccessUsers = role != "Employee",
                     CanAccessFinance = role != "Employee",
                     CanAccessCustomers = true,
-                    CanAccessSettings = true
+                    CanAccessSettings = true,
+                    CanAccessCheckin = true
                 };
                 _context.UserPagePermissions.Add(permissions);
                 await _context.SaveChangesAsync();
@@ -397,7 +402,8 @@ public class UsersController : ControllerBase
                 CanAccessUsers = permissions.CanAccessUsers,
                 CanAccessFinance = permissions.CanAccessFinance,
                 CanAccessCustomers = permissions.CanAccessCustomers,
-                CanAccessSettings = permissions.CanAccessSettings
+                CanAccessSettings = permissions.CanAccessSettings,
+                CanAccessCheckin = permissions.CanAccessCheckin
             };
         });
 

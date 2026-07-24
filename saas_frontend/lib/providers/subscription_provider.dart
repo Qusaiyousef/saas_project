@@ -25,7 +25,27 @@ class SubscriptionNotifier extends AsyncNotifier<List<dynamic>> {
 
     final resourceId = resource['id'] as String;
     final dio = ref.read(dioProvider);
-    final startDate = DateTime.now();
+    DateTime startDate = DateTime.now();
+
+    if (customerId != null) {
+      final currentSubs = state.asData?.value ?? [];
+      DateTime latestEnd = startDate;
+      for (var sub in currentSubs) {
+        if (sub['customerId']?.toString().toLowerCase() == customerId.toString().toLowerCase() && 
+            (sub['status'] == 0 || sub['status']?.toString() == '0' || sub['status']?.toString().toLowerCase() == 'active')) {
+          try {
+            final subEnd = DateTime.parse(sub['endDate']).toLocal();
+            if (subEnd.isAfter(latestEnd)) {
+              latestEnd = subEnd;
+            }
+          } catch (_) {}
+        }
+      }
+      if (latestEnd.isAfter(startDate)) {
+        startDate = latestEnd;
+      }
+    }
+
     final endDate = startDate.add(Duration(days: 30 * months));
 
     await dio.post('/subscriptions', data: {
