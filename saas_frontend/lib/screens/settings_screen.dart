@@ -5,6 +5,7 @@ import '../providers/locale_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
 import '../l10n/app_strings.dart';
+import '../utils/app_snackbar.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -53,6 +54,12 @@ class SettingsScreen extends ConsumerWidget {
                           onSelectionChanged: (Set<bool> selected) {
                             if (selected.first != isAr) {
                               ref.read(localeProvider.notifier).toggle();
+                              AppSnackBar.showInfo(
+                                context,
+                                selected.first
+                                    ? AppStrings.t('langChangedAr', isAr)
+                                    : AppStrings.t('langChangedEn', isAr),
+                              );
                             }
                           },
                         ),
@@ -96,6 +103,12 @@ class SettingsScreen extends ConsumerWidget {
                           onSelectionChanged: (Set<ThemeMode> selected) {
                             if (selected.first != themeMode) {
                               ref.read(themeProvider.notifier).toggleTheme();
+                              AppSnackBar.showInfo(
+                                context,
+                                selected.first == ThemeMode.dark
+                                    ? AppStrings.t('darkModeEnabled', isAr)
+                                    : AppStrings.t('lightModeEnabled', isAr),
+                              );
                             }
                           },
                         ),

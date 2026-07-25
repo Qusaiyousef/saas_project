@@ -163,6 +163,8 @@ class AppTheme {
 
       // SnackBar
       snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: const Color(0xFF213145),
         contentTextStyle: GoogleFonts.inter(color: const Color(0xFFEAF1FF)),
       ),
@@ -321,6 +323,8 @@ class AppTheme {
 
       // SnackBar
       snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: darkSurfaceHighest,
         contentTextStyle: GoogleFonts.inter(color: darkOnSurface),
       ),

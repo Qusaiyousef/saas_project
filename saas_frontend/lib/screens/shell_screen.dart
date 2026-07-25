@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../models/tenant_type.dart';
@@ -80,9 +81,6 @@ List<NavItem> buildNavItems(
         AppStrings.t('navSubscriptions', isAr),
       ),
     );
-  }
-  if ((type == TenantType.gym || type == TenantType.pool) &&
-      hasPerm('canAccessCheckin')) {
     items.add(
       NavItem(
         '/checkin',
@@ -92,6 +90,17 @@ List<NavItem> buildNavItems(
       ),
     );
   }
+  // if ((type == TenantType.gym || type == TenantType.pool) &&
+  //     hasPerm('canAccessCheckin')) {
+  //   items.add(
+  //     NavItem(
+  //       '/checkin',
+  //       Icons.how_to_reg_outlined,
+  //       Icons.how_to_reg,
+  //       AppStrings.t('navCheckin', isAr),
+  //     ),
+  //   );
+  // }
   if (hasPerm('canAccessFinance')) {
     items.add(
       NavItem(
@@ -151,7 +160,8 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     final List<Map<String, dynamic>> expiredSubs = [];
     final now = DateTime.now();
 
-    bool isToday(DateTime dt) => dt.year == now.year && dt.month == now.month && dt.day == now.day;
+    bool isToday(DateTime dt) =>
+        dt.year == now.year && dt.month == now.month && dt.day == now.day;
 
     bookingsAsync.whenData((bookings) {
       for (final b in bookings) {
@@ -204,14 +214,21 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
               ? _buildMobileDrawer(navItems, location, context, isAr)
               : null,
           body: isMobile
-              ? SafeArea(
-                  child: Column(
-                    children: [
-                      _buildMobileAppBar(hasAlert, context, isAr, expiredBookings, expiredSubs),
-                      Expanded(child: widget.child),
-                      _buildBottomBar(bottomNavItems, location, context),
-                    ],
-                  ),
+              ? Column(
+                  children: [
+                    SafeArea(
+                      bottom: false,
+                      child: _buildMobileAppBar(
+                        hasAlert,
+                        context,
+                        isAr,
+                        expiredBookings,
+                        expiredSubs,
+                      ),
+                    ),
+                    Expanded(child: widget.child),
+                    _buildBottomBar(bottomNavItems, location, context),
+                  ],
                 )
               : Row(
                   children: [
@@ -226,7 +243,13 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                     Expanded(
                       child: Column(
                         children: [
-                          _buildDesktopAppBar(context, hasAlert, isAr, expiredBookings, expiredSubs),
+                          _buildDesktopAppBar(
+                            context,
+                            hasAlert,
+                            isAr,
+                            expiredBookings,
+                            expiredSubs,
+                          ),
                           Expanded(child: widget.child),
                         ],
                       ),
@@ -246,8 +269,10 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     String? role,
     bool isAr,
   ) {
-    final tenantLabel = tenantType.name;
-    final roleLabel = role == 'Admin' ? 'Admin' : 'Employee';
+    final tenantLabel = tenantType.label(isAr);
+    final roleLabel = role == 'Admin'
+        ? AppStrings.t('roleAdmin', isAr)
+        : AppStrings.t('roleEmployee', isAr);
     final colors = Theme.of(context).colorScheme;
 
     return Container(
@@ -421,10 +446,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      color: colors.onSurfaceVariant,
-                    ),
+                    icon: Icon(Icons.close, color: colors.onSurfaceVariant),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -469,54 +491,223 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     );
   }
 
-  void _showNotifications(BuildContext context, bool isAr, List<Map<String, dynamic>> expiredBookings, List<Map<String, dynamic>> expiredSubs) {
-    showDialog(
+  void _showNotifications(
+    BuildContext context,
+    bool isAr,
+    List<Map<String, dynamic>> expiredBookings,
+    List<Map<String, dynamic>> expiredSubs,
+  ) {
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return AlertDialog(
-          title: Text(isAr ? 'التنبيهات' : 'Notifications'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                if (expiredBookings.isEmpty && expiredSubs.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(isAr ? 'لا توجد تنبيهات' : 'No notifications'),
-                  ),
-                if (expiredBookings.isNotEmpty) ...[
-                  Text(isAr ? 'حجوزات منتهية' : 'Expired Bookings', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  ...expiredBookings.map((b) => ListTile(
-                    leading: const Icon(Icons.event_busy, color: Colors.red),
-                    title: Text('${b['customerName']}'),
-                    subtitle: Text(isAr ? 'انتهى الحجز' : 'Booking expired'),
-                  )),
-                  const Divider(),
-                ],
-                if (expiredSubs.isNotEmpty) ...[
-                  Text(isAr ? 'اشتراكات منتهية' : 'Expired Subscriptions', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  ...expiredSubs.map((s) => ListTile(
-                    leading: const Icon(Icons.card_membership, color: Colors.orange),
-                    title: Text('${s['customerName']}'),
-                    subtitle: Text(isAr ? 'انتهى الاشتراك' : 'Subscription expired'),
-                  )),
-                ],
-              ],
-            ),
+        final theme = Theme.of(context);
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(isAr ? 'إغلاق' : 'Close'),
-            ),
-          ],
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: theme.shadowColor.withValues(alpha: 0.15),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.only(top: 12, left: 20, right: 20, bottom: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.dividerColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.notifications_active_rounded,
+                          color: theme.colorScheme.primary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        isAr ? 'مركز التنبيهات والأحداث' : 'Notification Center',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    if (expiredBookings.isEmpty && expiredSubs.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 32),
+                        child: Column(
+                          children: [
+                            Icon(Icons.notifications_off_outlined, size: 48, color: theme.colorScheme.onSurfaceVariant),
+                            const SizedBox(height: 12),
+                            Text(
+                              isAr ? 'لا توجد تنبيهات حالية' : 'No active notifications',
+                              style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (expiredBookings.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          isAr ? 'حجوزات منتهية تحتاج لمتابعة' : 'Expired Bookings Needing Attention',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: theme.colorScheme.error,
+                          ),
+                        ),
+                      ),
+                      ...expiredBookings.map(
+                        (b) => Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.errorContainer.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: theme.colorScheme.error.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.error.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.event_busy_rounded, color: theme.colorScheme.error, size: 20),
+                            ),
+                            title: Text(
+                              '${b['customerName']}',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              isAr ? 'انتهت فترة الحجز المحددة' : 'Scheduled booking period ended',
+                              style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                            ),
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.error,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                isAr ? 'منتهي' : 'Expired',
+                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    if (expiredSubs.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          isAr ? 'اشتراكات منتهية تحتاج للتجديد' : 'Expired Subscriptions Needing Renewal',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: Colors.amber,
+                          ),
+                        ),
+                      ),
+                      ...expiredSubs.map(
+                        (s) => Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.amber.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.card_membership_rounded, color: Colors.amber, size: 20),
+                            ),
+                            title: Text(
+                              '${s['customerName']}',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              isAr ? 'انتهت صلاحية تذكرة الاشتراك' : 'Subscription plan expired',
+                              style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                            ),
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.shade700,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                isAr ? 'تجديد' : 'Renew',
+                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildDesktopAppBar(BuildContext context, bool hasAlert, bool isAr, List<Map<String, dynamic>> expiredBookings, List<Map<String, dynamic>> expiredSubs) {
+  Widget _buildDesktopAppBar(
+    BuildContext context,
+    bool hasAlert,
+    bool isAr,
+    List<Map<String, dynamic>> expiredBookings,
+    List<Map<String, dynamic>> expiredSubs,
+  ) {
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -564,7 +755,12 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                   backgroundColor: Theme.of(context).colorScheme.error,
                   child: const Icon(Icons.notifications_outlined),
                 ),
-                onPressed: () => _showNotifications(context, isAr, expiredBookings, expiredSubs),
+                onPressed: () => _showNotifications(
+                  context,
+                  isAr,
+                  expiredBookings,
+                  expiredSubs,
+                ),
               ),
               const SizedBox(width: 8),
               // const CircleAvatar(
@@ -578,56 +774,75 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     );
   }
 
-  Widget _buildMobileAppBar(bool hasAlert, BuildContext context, bool isAr, List<Map<String, dynamic>> expiredBookings, List<Map<String, dynamic>> expiredSubs) {
-    return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor.withValues(alpha: 0.8),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).shadowColor.withValues(alpha: 0.02),
-            blurRadius: 4,
-          ),
-        ],
+  Widget _buildMobileAppBar(
+    bool hasAlert,
+    BuildContext context,
+    bool isAr,
+    List<Map<String, dynamic>> expiredBookings,
+    List<Map<String, dynamic>> expiredSubs,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
       ),
-      child: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Row(
-            children: [
-              IconButton(
-                icon: Icon(
-                  Icons.menu,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                onPressed: () {
-                  _scaffoldKey.currentState?.openDrawer();
-                },
-              ),
-              Expanded(
-                child: Text(
-                 AppStrings.t ('appTitle', isAr),
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              IconButton(
-                icon: Badge(
-                  isLabelVisible: hasAlert,
-                  backgroundColor: Theme.of(context).colorScheme.error,
-                  child: Icon(
-                    Icons.notifications_outlined,
+      child: Container(
+        height: 64,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor.withValues(alpha: 0.8),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).shadowColor.withValues(alpha: 0.02),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.menu,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
+                  onPressed: () {
+                    _scaffoldKey.currentState?.openDrawer();
+                  },
                 ),
-                onPressed: () => _showNotifications(context, isAr, expiredBookings, expiredSubs),
-              ),
-            ],
+                Expanded(
+                  child: Text(
+                    AppStrings.t('appTitle', isAr),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                IconButton(
+                  icon: Badge(
+                    isLabelVisible: hasAlert,
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                    child: Icon(
+                      Icons.notifications_outlined,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  onPressed: () => _showNotifications(
+                    context,
+                    isAr,
+                    expiredBookings,
+                    expiredSubs,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -639,7 +854,9 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     String location,
     BuildContext context,
   ) {
-    int selectedIndex = items.indexWhere((item) => location.startsWith(item.path));
+    int selectedIndex = items.indexWhere(
+      (item) => location.startsWith(item.path),
+    );
     if (selectedIndex == -1) selectedIndex = 0;
 
     return NavigationBar(

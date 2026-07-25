@@ -6,6 +6,7 @@ import '../providers/users_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/auth_provider.dart';
 import '../l10n/app_strings.dart';
+import '../utils/app_snackbar.dart';
 
 class UsersScreen extends ConsumerWidget {
   const UsersScreen({super.key});
@@ -51,8 +52,9 @@ class UsersScreen extends ConsumerWidget {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Text(s("usersSubtitle"),
-                           
+                          Text(
+                            s("usersSubtitle"),
+
                             style: TextStyle(
                               color: Theme.of(
                                 context,
@@ -72,8 +74,12 @@ class UsersScreen extends ConsumerWidget {
                               horizontal: 24,
                               vertical: 16,
                             ),
-                            backgroundColor: Theme.of(context).colorScheme.primary,
-                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onPrimary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -188,9 +194,8 @@ class UsersScreen extends ConsumerWidget {
                                   leading: CircleAvatar(
                                     radius: 20,
                                     backgroundColor: isAdmin
-                                        ? Theme.of(
-                                            context,
-                                          ).colorScheme.primary.withValues(alpha: 0.15)
+                                        ? Theme.of(context).colorScheme.primary
+                                              .withValues(alpha: 0.15)
                                         : Theme.of(context)
                                               .colorScheme
                                               .onSurfaceVariant
@@ -200,7 +205,9 @@ class UsersScreen extends ConsumerWidget {
                                           ? Icons.admin_panel_settings
                                           : Icons.person,
                                       color: isAdmin
-                                          ? Theme.of(context).colorScheme.primary
+                                          ? Theme.of(
+                                              context,
+                                            ).colorScheme.primary
                                           : Theme.of(
                                               context,
                                             ).colorScheme.onSurfaceVariant,
@@ -238,7 +245,9 @@ class UsersScreen extends ConsumerWidget {
                                         ),
                                         decoration: BoxDecoration(
                                           color: isAdmin
-                                              ? Theme.of(context).colorScheme.primary
+                                              ? Theme.of(context)
+                                                    .colorScheme
+                                                    .primary
                                                     .withValues(alpha: 0.1)
                                               : Theme.of(context)
                                                     .colorScheme
@@ -249,7 +258,9 @@ class UsersScreen extends ConsumerWidget {
                                           ),
                                           border: Border.all(
                                             color: isAdmin
-                                                ? Theme.of(context).colorScheme.primary
+                                                ? Theme.of(context)
+                                                      .colorScheme
+                                                      .primary
                                                       .withValues(alpha: 0.3)
                                                 : Colors.transparent,
                                           ),
@@ -260,7 +271,9 @@ class UsersScreen extends ConsumerWidget {
                                             fontWeight: FontWeight.bold,
                                             fontSize: 12,
                                             color: isAdmin
-                                                ? Theme.of(context).colorScheme.primary
+                                                ? Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary
                                                 : Theme.of(context)
                                                       .colorScheme
                                                       .onSurfaceVariant,
@@ -272,7 +285,10 @@ class UsersScreen extends ConsumerWidget {
                                         IconButton(
                                           visualDensity: VisualDensity.compact,
                                           padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 32,
+                                            minHeight: 32,
+                                          ),
                                           icon: const Icon(
                                             Icons.edit,
                                             size: 20,
@@ -288,7 +304,10 @@ class UsersScreen extends ConsumerWidget {
                                         IconButton(
                                           visualDensity: VisualDensity.compact,
                                           padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 32,
+                                            minHeight: 32,
+                                          ),
                                           icon: Icon(
                                             Icons.delete_outline,
                                             size: 20,
@@ -425,7 +444,9 @@ class UsersScreen extends ConsumerWidget {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.secondary,
-                      foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                      foregroundColor: Theme.of(
+                        context,
+                      ).colorScheme.onSecondary,
                     ),
                     onPressed: () => Navigator.pop(c, true),
                     child: Text(s('ok')),
@@ -452,223 +473,219 @@ class UsersScreen extends ConsumerWidget {
         return StatefulBuilder(
           builder: (ctx, setState) {
             return AlertDialog(
-            title: Row(
-              children: [
-                Icon(
-                  Icons.person_add,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(s('usersCreateTitle')),
-              ],
-            ),
-            content: SizedBox(
-              width: 400,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: 8), // Prevent outline cropping
-                    TextField(
-                      controller: nameCtrl,
-                      decoration: InputDecoration(
-                        labelText: '${s('usersFullName')} *',
-                        prefixIcon: const Icon(Icons.person),
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: emailCtrl,
-                      decoration: InputDecoration(
-                        labelText: '${s('usersEmail')} *',
-                        prefixIcon: const Icon(Icons.email),
-                        border: const OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: passCtrl,
-                      obscureText: obscurePass,
-                      decoration: InputDecoration(
-                        labelText: '${s('usersPassword')} *',
-                        prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: IconButton(
-                          icon: Icon(obscurePass ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => obscurePass = !obscurePass),
-                        ),
-                        border: const OutlineInputBorder(),
-                        helperText: s('usersPasswordHint'),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedRole,
-                      decoration: InputDecoration(
-                        labelText: s('usersRole'),
-                        prefixIcon: const Icon(Icons.security),
-                        border: const OutlineInputBorder(),
-                      ),
-                      items: [
-                        DropdownMenuItem(
-                          value: 'Employee',
-                          child: Text(s('usersEmployee')),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Admin',
-                          child: Text(s('usersAdmin')),
-                        ),
-                      ],
-                      onChanged: (val) {
-                        setState(() {
-                          selectedRole = val!;
-                          if (val == 'Admin') {
-                            permissions['canAccessDashboard'] = true;
-                            permissions['canAccessUsers'] = true;
-                            permissions['canAccessFinance'] = true;
-                          }
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      s('usersPagePermissions'),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const Divider(),
-                    Column(
-                      children: [
-                        buildPermissionCheckbox(
-                          'canAccessDashboard',
-                          s('navDashboard'),
-                          Icons.dashboard,
-                          setState,
-                        ),
-                        buildPermissionCheckbox(
-                          'canAccessCalendar',
-                          s('navCalendar'),
-                          Icons.calendar_today,
-                          setState,
-                        ),
-                        buildPermissionCheckbox(
-                          'canAccessPOS',
-                          s('navPos'),
-                          Icons.point_of_sale,
-                          setState,
-                        ),
-                        if (!isChalet)
-                          buildPermissionCheckbox(
-                            'canAccessSubscriptions',
-                            s('navSubscriptions'),
-                            Icons.card_membership,
-                            setState,
-                          ),
-                        if (!isChalet)
-                          buildPermissionCheckbox(
-                            'canAccessCheckin',
-                            s('navCheckin'),
-                            Icons.fingerprint,
-                            setState,
-                          ),
-                        buildPermissionCheckbox(
-                          'canAccessUsers',
-                          s('navUsers'),
-                          Icons.people,
-                          setState,
-                        ),
-                        buildPermissionCheckbox(
-                          'canAccessFinance',
-                          s('navFinance'),
-                          Icons.attach_money,
-                          setState,
-                        ),
-                        if (!isChalet)
-                          buildPermissionCheckbox(
-                            'canAccessCustomers',
-                            s('navCustomers'),
-                            Icons.groups,
-                            setState,
-                          ),
-
-                        buildPermissionCheckbox(
-                          'canAccessSettings',
-                          s('navSettings'),
-                          Icons.settings,
-                          setState,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.person_add,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(s('usersCreateTitle')),
+                ],
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton.icon(
-                onPressed: loading
-                    ? null
-                    : () async {
-                        if (nameCtrl.text.trim().isEmpty ||
-                            emailCtrl.text.trim().isEmpty ||
-                            passCtrl.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('All fields are required'),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.error,
+              content: SizedBox(
+                width: 400,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 8), // Prevent outline cropping
+                      TextField(
+                        controller: nameCtrl,
+                        decoration: InputDecoration(
+                          labelText: '${s('usersFullName')} *',
+                          prefixIcon: const Icon(Icons.person),
+                          border: const OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: emailCtrl,
+                        decoration: InputDecoration(
+                          labelText: '${s('usersEmail')} *',
+                          prefixIcon: const Icon(Icons.email),
+                          border: const OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: passCtrl,
+                        obscureText: obscurePass,
+                        decoration: InputDecoration(
+                          labelText: '${s('usersPassword')} *',
+                          prefixIcon: const Icon(Icons.lock),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              obscurePass
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
                             ),
-                          );
-                          return;
-                        }
-                        setState(() => loading = true);
-                        try {
-                          await ref
-                              .read(usersProvider.notifier)
-                              .createUser(
-                                email: emailCtrl.text.trim(),
-                                fullName: nameCtrl.text.trim(),
-                                password: passCtrl.text,
-                                role: selectedRole,
-                                permissions: permissions,
-                              );
-                          if (ctx.mounted) Navigator.pop(ctx);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(s('usersCreated')),
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.primary,
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          setState(() => loading = false);
-                          if (context.mounted) {
-                            _showErrorDialog(context, ref, e.toString());
-                          }
-                        }
-                      },
-                icon: loading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save),
-                label: Text(s('usersCreateUser')),
+                            onPressed: () =>
+                                setState(() => obscurePass = !obscurePass),
+                          ),
+                          border: const OutlineInputBorder(),
+                          helperText: s('usersPasswordHint'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedRole,
+                        decoration: InputDecoration(
+                          labelText: s('usersRole'),
+                          prefixIcon: const Icon(Icons.security),
+                          border: const OutlineInputBorder(),
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                            value: 'Employee',
+                            child: Text(s('usersEmployee')),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Admin',
+                            child: Text(s('usersAdmin')),
+                          ),
+                        ],
+                        onChanged: (val) {
+                          setState(() {
+                            selectedRole = val!;
+                            if (val == 'Admin') {
+                              permissions['canAccessDashboard'] = true;
+                              permissions['canAccessUsers'] = true;
+                              permissions['canAccessFinance'] = true;
+                            }
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        s('usersPagePermissions'),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const Divider(),
+                      Column(
+                        children: [
+                          buildPermissionCheckbox(
+                            'canAccessDashboard',
+                            s('navDashboard'),
+                            Icons.dashboard,
+                            setState,
+                          ),
+                          buildPermissionCheckbox(
+                            'canAccessCalendar',
+                            s('navCalendar'),
+                            Icons.calendar_today,
+                            setState,
+                          ),
+                          buildPermissionCheckbox(
+                            'canAccessPOS',
+                            s('navPos'),
+                            Icons.point_of_sale,
+                            setState,
+                          ),
+                          if (!isChalet)
+                            buildPermissionCheckbox(
+                              'canAccessSubscriptions',
+                              s('navSubscriptions'),
+                              Icons.card_membership,
+                              setState,
+                            ),
+                          if (!isChalet)
+                            buildPermissionCheckbox(
+                              'canAccessCheckin',
+                              s('navCheckin'),
+                              Icons.fingerprint,
+                              setState,
+                            ),
+                          buildPermissionCheckbox(
+                            'canAccessUsers',
+                            s('navUsers'),
+                            Icons.people,
+                            setState,
+                          ),
+                          buildPermissionCheckbox(
+                            'canAccessFinance',
+                            s('navFinance'),
+                            Icons.attach_money,
+                            setState,
+                          ),
+                          if (!isChalet)
+                            buildPermissionCheckbox(
+                              'canAccessCustomers',
+                              s('navCustomers'),
+                              Icons.groups,
+                              setState,
+                            ),
+
+                          buildPermissionCheckbox(
+                            'canAccessSettings',
+                            s('navSettings'),
+                            Icons.settings,
+                            setState,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
-          );
-        },
-      );
-    },
-  );
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: loading
+                      ? null
+                      : () async {
+                          if (nameCtrl.text.trim().isEmpty ||
+                              emailCtrl.text.trim().isEmpty ||
+                              passCtrl.text.isEmpty) {
+                            AppSnackBar.showError(context, 'All fields are required');
+                            return;
+                          }
+                          setState(() => loading = true);
+                          try {
+                            await ref
+                                .read(usersProvider.notifier)
+                                .createUser(
+                                  email: emailCtrl.text.trim(),
+                                  fullName: nameCtrl.text.trim(),
+                                  password: passCtrl.text,
+                                  role: selectedRole,
+                                  permissions: permissions,
+                                );
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            if (context.mounted) {
+                              AppSnackBar.showSuccessDialog(
+                                context,
+                                title: AppStrings.t('userCreatedTitle', isAr),
+                                message: AppStrings.t('userCreatedMsg', isAr),
+                                confirmLabel: AppStrings.t('ok', isAr),
+                              );
+                            }
+                          } catch (e) {
+                            setState(() => loading = false);
+                            if (context.mounted) {
+                              _showErrorDialog(context, ref, e.toString());
+                            }
+                          }
+                        },
+                  icon: loading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save),
+                  label: Text(s('usersCreateUser')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showEditDialog(
@@ -701,9 +718,9 @@ class UsersScreen extends ConsumerWidget {
     );
 
     // FIX: If the backend did not return 'canAccessCheckin', assume true as the default.
-    if (!permissions.containsKey('canAccessCheckin')) {
-      permissions['canAccessCheckin'] = true;
-    }
+    // if (!permissions.containsKey('canAccessCheckin')) {
+    //   permissions['canAccessCheckin'] = true;
+    // }
 
     if (isChalet) {
       permissions['canAccessSubscriptions'] = false;
@@ -776,203 +793,208 @@ class UsersScreen extends ConsumerWidget {
         return StatefulBuilder(
           builder: (ctx, setState) {
             return AlertDialog(
-            title: Row(
-              children: [
-                Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(s('usersEditTitle')),
-              ],
-            ),
-            content: SizedBox(
-              width: 400,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: 8), // Prevent outline cropping
-                    TextField(
-                      controller: nameCtrl,
-                      decoration: InputDecoration(
-                        labelText: s('usersFullName'),
-                        prefixIcon: const Icon(Icons.person),
-                        border: const OutlineInputBorder(),
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.edit,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(s('usersEditTitle')),
+                ],
+              ),
+              content: SizedBox(
+                width: 400,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 8), // Prevent outline cropping
+                      TextField(
+                        controller: nameCtrl,
+                        decoration: InputDecoration(
+                          labelText: s('usersFullName'),
+                          prefixIcon: const Icon(Icons.person),
+                          border: const OutlineInputBorder(),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: emailCtrl,
-                      decoration: InputDecoration(
-                        labelText: s('usersEmail'),
-                        prefixIcon: const Icon(Icons.email),
-                        border: const OutlineInputBorder(),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: emailCtrl,
+                        decoration: InputDecoration(
+                          labelText: s('usersEmail'),
+                          prefixIcon: const Icon(Icons.email),
+                          border: const OutlineInputBorder(),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: passCtrl,
-                      obscureText: obscurePass,
-                      decoration: InputDecoration(
-                        labelText: s('usersNewPassword'),
-                        prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: IconButton(
-                          icon: Icon(obscurePass ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => obscurePass = !obscurePass),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: passCtrl,
+                        obscureText: obscurePass,
+                        decoration: InputDecoration(
+                          labelText: s('usersNewPassword'),
+                          prefixIcon: const Icon(Icons.lock),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              obscurePass
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () =>
+                                setState(() => obscurePass = !obscurePass),
+                          ),
+                          border: const OutlineInputBorder(),
                         ),
-                        border: const OutlineInputBorder(),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedRole,
-                      decoration: InputDecoration(
-                        labelText: s('usersRole'),
-                        prefixIcon: const Icon(Icons.security),
-                        border: const OutlineInputBorder(),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedRole,
+                        decoration: InputDecoration(
+                          labelText: s('usersRole'),
+                          prefixIcon: const Icon(Icons.security),
+                          border: const OutlineInputBorder(),
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                            value: 'Employee',
+                            child: Text(s('usersEmployee')),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Admin',
+                            child: Text(s('usersAdmin')),
+                          ),
+                        ],
+                        onChanged: (val) => setState(() => selectedRole = val!),
                       ),
-                      items: [
-                        DropdownMenuItem(
-                          value: 'Employee',
-                          child: Text(s('usersEmployee')),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Admin',
-                          child: Text(s('usersAdmin')),
-                        ),
-                      ],
-                      onChanged: (val) => setState(() => selectedRole = val!),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      s('usersPagePermissions'),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const Divider(),
-                    Column(
-                      children: [
-                        buildPermissionCheckbox(
-                          'canAccessDashboard',
-                          s('navDashboard'),
-                          Icons.dashboard,
-                          setState,
-                        ),
-                        buildPermissionCheckbox(
-                          'canAccessCalendar',
-                          s('navCalendar'),
-                          Icons.calendar_today,
-                          setState,
-                        ),
-                        buildPermissionCheckbox(
-                          'canAccessPOS',
-                          s('navPos'),
-                          Icons.point_of_sale,
-                          setState,
-                        ),
-                        if (!isChalet)
+                      const SizedBox(height: 16),
+                      Text(
+                        s('usersPagePermissions'),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const Divider(),
+                      Column(
+                        children: [
                           buildPermissionCheckbox(
-                            'canAccessSubscriptions',
-                            s('navSubscriptions'),
-                            Icons.card_membership,
+                            'canAccessDashboard',
+                            s('navDashboard'),
+                            Icons.dashboard,
                             setState,
                           ),
-                        if (!isChalet)
                           buildPermissionCheckbox(
-                            'canAccessCheckin',
-                            s('navCheckin'),
-                            Icons.fingerprint,
+                            'canAccessCalendar',
+                            s('navCalendar'),
+                            Icons.calendar_today,
                             setState,
                           ),
-                        buildPermissionCheckbox(
-                          'canAccessUsers',
-                          s('navUsers'),
-                          Icons.people,
-                          setState,
-                        ),
-                        buildPermissionCheckbox(
-                          'canAccessFinance',
-                          s('navFinance'),
-                          Icons.attach_money,
-                          setState,
-                        ),
-                        if (!isChalet)
                           buildPermissionCheckbox(
-                            'canAccessCustomers',
-                            s('navCustomers'),
-                            Icons.groups,
+                            'canAccessPOS',
+                            s('navPos'),
+                            Icons.point_of_sale,
                             setState,
                           ),
-                        buildPermissionCheckbox(
-                          'canAccessSettings',
-                          s('navSettings'),
-                          Icons.settings,
-                          setState,
-                        ),
-                      ],
-                    ),
-                  ],
+                          if (!isChalet)
+                            buildPermissionCheckbox(
+                              'canAccessSubscriptions',
+                              s('navSubscriptions'),
+                              Icons.card_membership,
+                              setState,
+                            ),
+                          if (!isChalet)
+                            buildPermissionCheckbox(
+                              'canAccessCheckin',
+                              s('navCheckin'),
+                              Icons.fingerprint,
+                              setState,
+                            ),
+                          buildPermissionCheckbox(
+                            'canAccessUsers',
+                            s('navUsers'),
+                            Icons.people,
+                            setState,
+                          ),
+                          buildPermissionCheckbox(
+                            'canAccessFinance',
+                            s('navFinance'),
+                            Icons.attach_money,
+                            setState,
+                          ),
+                          if (!isChalet)
+                            buildPermissionCheckbox(
+                              'canAccessCustomers',
+                              s('navCustomers'),
+                              Icons.groups,
+                              setState,
+                            ),
+                          buildPermissionCheckbox(
+                            'canAccessSettings',
+                            s('navSettings'),
+                            Icons.settings,
+                            setState,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(s('cancel')),
-              ),
-              ElevatedButton.icon(
-                onPressed: loading
-                    ? null
-                    : () async {
-                        setState(() => loading = true);
-                        try {
-                          await ref
-                              .read(usersProvider.notifier)
-                              .updateUser(
-                                id: user['id'],
-                                email: emailCtrl.text.trim(),
-                                fullName: nameCtrl.text.trim(),
-                                password: passCtrl.text.isNotEmpty
-                                    ? passCtrl.text
-                                    : null,
-                                role: selectedRole,
-                                permissions: permissions,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(s('cancel')),
+                ),
+                ElevatedButton.icon(
+                  onPressed: loading
+                      ? null
+                      : () async {
+                          setState(() => loading = true);
+                          try {
+                            await ref
+                                .read(usersProvider.notifier)
+                                .updateUser(
+                                  id: user['id'],
+                                  email: emailCtrl.text.trim(),
+                                  fullName: nameCtrl.text.trim(),
+                                  password: passCtrl.text.isNotEmpty
+                                      ? passCtrl.text
+                                      : null,
+                                  role: selectedRole,
+                                  permissions: permissions,
+                                );
+                            
+                            // Unconditionally fetch permissions to update the UI just in case
+                            ref.read(authProvider.notifier).fetchMyPermissions();
+
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            if (context.mounted) {
+                              AppSnackBar.showSuccessDialog(
+                                context,
+                                title: AppStrings.t('userUpdatedTitle', isAr),
+                                message: AppStrings.t('userUpdatedMsg', isAr),
+                                confirmLabel: AppStrings.t('ok', isAr),
                               );
-                          if (ctx.mounted) Navigator.pop(ctx);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  s('usersUpdated'),
-                                  style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onPrimary,
-                                  ),
-                                ),
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.primary,
-                              ),
-                            );
+                            }
+                          } catch (e) {
+                            setState(() => loading = false);
+                            if (context.mounted) {
+                              _showErrorDialog(context, ref, e.toString());
+                            }
                           }
-                        } catch (e) {
-                          setState(() => loading = false);
-                          if (context.mounted) {
-                            _showErrorDialog(context, ref, e.toString());
-                          }
-                        }
-                      },
-                icon: loading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save),
-                label: Text(s('usersSaveChanges')),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
+                        },
+                  icon: loading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save),
+                  label: Text(s('usersSaveChanges')),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _confirmDelete(
@@ -1064,11 +1086,11 @@ class UsersScreen extends ConsumerWidget {
               try {
                 await ref.read(usersProvider.notifier).deleteUser(user['id']);
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(s('usersDeleted')),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                    ),
+                  AppSnackBar.showSuccessDialog(
+                    context,
+                    title: AppStrings.t('userDeletedTitle', isAr),
+                    message: AppStrings.t('userDeletedMsg', isAr),
+                    confirmLabel: AppStrings.t('ok', isAr),
                   );
                 }
               } catch (e) {

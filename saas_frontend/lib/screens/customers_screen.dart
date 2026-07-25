@@ -6,6 +6,7 @@ import '../providers/customers_provider.dart';
 import '../providers/payments_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_strings.dart';
+import '../utils/app_snackbar.dart';
 import 'package:intl/intl.dart';
 
 class CustomersScreen extends ConsumerStatefulWidget {
@@ -135,43 +136,23 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                         final phone = phoneController.text.trim();
 
                         if (name.isEmpty) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(AppStrings.t('valNameRequired', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valNameRequired', isAr));
                           return;
                         }
 
                         if (phone.isEmpty) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(AppStrings.t('valPhoneRequired', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valPhoneRequired', isAr));
                           return;
                         }
 
                         final yemenPhoneRegex = RegExp(r'^(77|78|73|71)\d{7}$');
                         if (!yemenPhoneRegex.hasMatch(phone)) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(AppStrings.t('valPhoneInvalidYemen', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valPhoneInvalidYemen', isAr));
                           return;
                         }
 
                         if (selectedDob == null) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(AppStrings.t('valDobRequired', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valDobRequired', isAr));
                           return;
                         }
 
@@ -185,17 +166,18 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                 selectedDob,
                               );
                           if (ctx.mounted) Navigator.pop(ctx);
+                          if (context.mounted) {
+                            AppSnackBar.showSuccessDialog(
+                              context,
+                              title: AppStrings.t('customerAddedTitle', isAr),
+                              message: AppStrings.t('customerAddedMsg', isAr),
+                              confirmLabel: AppStrings.t('ok', isAr),
+                            );
+                          }
                         } catch (e) {
                           setState(() => isLoading = false);
                           if (ctx.mounted) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(
-                                content: Text('$e'),
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.error,
-                              ),
-                            );
+                            AppSnackBar.showError(ctx, '$e');
                           }
                         }
                       },
@@ -282,22 +264,16 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                           ref.invalidate(customersProvider);
                           if (ctx.mounted) Navigator.pop(ctx);
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  AppStrings.t('paymentSuccessful', isAr),
-                                ),
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.primary,
-                              ),
+                            AppSnackBar.showSuccessDialog(
+                              context,
+                              title: AppStrings.t('paymentRecordedTitle', isAr),
+                              message: AppStrings.t('paymentRecordedMsg', isAr),
+                              confirmLabel: AppStrings.t('ok', isAr),
                             );
                           }
                         } catch (e) {
                           setState(() => isPaying = false);
-                          ScaffoldMessenger.of(
-                            ctx,
-                          ).showSnackBar(SnackBar(content: Text(isAr ? 'حدث خطأ: $e' : 'Error: $e')));
+                          AppSnackBar.showError(ctx, isAr ? 'حدث خطأ: $e' : 'Error: $e');
                         }
                       },
                 icon: isPaying
@@ -492,9 +468,9 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                             alignment: WrapAlignment.spaceBetween,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              const Text(
-                                'All Customers',
-                                style: TextStyle(
+                              Text(
+                                AppStrings.t('allCustomers', isAr),
+                                style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -530,7 +506,6 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
 
                         // Table
                         SizedBox(
-                          height: 600,
                           child: customersAsync.when(
                             loading: () => const Center(
                               child: CircularProgressIndicator(),
@@ -618,13 +593,19 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                 return _buildMobileCustomersList(filteredCustomers, isAr, context);
                               }
 
-                              return DataTable2(
+                              return LayoutBuilder(
+                                builder: (context, constraints) {
+                                  return SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                                      child: DataTable(
                                 showCheckboxColumn: false,
                                 sortColumnIndex: _sortColumnIndex,
                                 sortAscending: _sortAscending,
                                 columnSpacing: 16,
-                                horizontalMargin: 24,
-                                minWidth: 900,
+                                
+                                
                                 headingRowColor: WidgetStateProperty.all(
                                   Theme.of(
                                     context,
@@ -641,7 +622,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                 }),
                                 dividerThickness: 0.5,
                                 columns: [
-                                  DataColumn2(
+                                  DataColumn(
                                     onSort: _sort,
                                     label: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -659,9 +640,9 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                           const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
                                       ],
                                     ),
-                                    size: ColumnSize.L,
+                                    
                                   ),
-                                  DataColumn2(
+                                  DataColumn(
                                     label: Text(
                                       AppStrings.t('customerPhone', isAr),
                                       maxLines: 1,
@@ -673,9 +654,9 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                         ).colorScheme.onSurfaceVariant,
                                       ),
                                     ),
-                                    size: ColumnSize.M,
+                                    
                                   ),
-                                  DataColumn2(
+                                  DataColumn(
                                     label: Text(
                                       AppStrings.t('customerAge', isAr),
                                       maxLines: 1,
@@ -687,9 +668,9 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                         ).colorScheme.onSurfaceVariant,
                                       ),
                                     ),
-                                    size: ColumnSize.S,
+                                    
                                   ),
-                                  DataColumn2(
+                                  DataColumn(
                                     onSort: _sort,
                                     label: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -707,10 +688,10 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                           const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
                                       ],
                                     ),
-                                    size: ColumnSize.M,
+                                    
                                     numeric: true,
                                   ),
-                                  DataColumn2(
+                                  DataColumn(
                                     onSort: _sort,
                                     label: Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -728,12 +709,12 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                           const Icon(Icons.unfold_more, size: 16, color: Colors.grey),
                                       ],
                                     ),
-                                    size: ColumnSize.M,
+                                    
                                     numeric: true,
                                   ),
-                                  DataColumn2(
+                                  DataColumn(
                                     label: const Text(''),
-                                    size: ColumnSize.L,
+                                    
                                   ), // Actions
                                 ],
                                 rows: filteredCustomers.map((c) {
@@ -1017,24 +998,23 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                                         .deleteCustomer(
                                                           c['id'],
                                                         );
+                                                    if (context.mounted) {
+                                                      AppSnackBar.showSuccessDialog(
+                                                        context,
+                                                        title: AppStrings.t('customerDeletedTitle', isAr),
+                                                        message: AppStrings.t('customerDeletedMsg', isAr),
+                                                        confirmLabel: AppStrings.t('ok', isAr),
+                                                      );
+                                                    }
                                                   } catch (e) {
                                                     if (context.mounted) {
                                                       final errorMsg = e.toString().toLowerCase();
                                                       final isForeignKey = errorMsg.contains('foreign') || errorMsg.contains('constraint') || errorMsg.contains('500');
-                                                      ScaffoldMessenger.of(
+                                                      AppSnackBar.showError(
                                                         context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            isForeignKey 
-                                                              ? (isAr ? 'عذراً، لا يمكن حذف العميل لوجود حجوزات أو مبالغ مالية مرتبطة به.' : 'Cannot delete customer because they have related bookings or transactions.') 
-                                                              : (isAr ? 'حدث خطأ: $e' : 'Error: $e'),
-                                                          ),
-                                                          backgroundColor:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .error,
-                                                        ),
+                                                        isForeignKey 
+                                                          ? AppStrings.t('cannotDeleteCustomerMsg', isAr) 
+                                                          : '${AppStrings.t('error', isAr)}: $e',
                                                       );
                                                     }
                                                   }
@@ -1047,24 +1027,30 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                                     ],
                                   );
                                 }).toList(),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+                              ), // Close DataTable
+                            ), // Close ConstrainedBox
+                          ); // Close SingleChildScrollView
+                        }, // Close builder
+                      ); // Close LayoutBuilder
+                    }, // Close data: (customers)
+                  ), // Close customersAsync.when
+                ), // Close SizedBox
+              ], // Close children: [ of Column
+            ), // Close Column
+          ), // Close BackdropFilter
+        ), // Close ClipRRect
+      ), // Close Container
+    ], // Close children: [ of Column
+  ), // Close Column
+), // Close ConstrainedBox
+      ), // Close SingleChildScrollView
+    ); // Close Scaffold
   }
 
   Widget _buildMobileCustomersList(List<dynamic> customers, bool isAr, BuildContext context) {
     return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 24),
       itemCount: customers.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
@@ -1305,19 +1291,23 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                           if (confirm == true) {
                             try {
                               await ref.read(customersProvider.notifier).deleteCustomer(c['id']);
+                              if (context.mounted) {
+                                AppSnackBar.showSuccessDialog(
+                                  context,
+                                  title: isAr ? 'تم حذف العميل' : 'Customer Deleted',
+                                  message: isAr ? 'تم حذف العميل وسجلاته بنجاح من النظام.' : 'Customer and their records deleted successfully.',
+                                  confirmLabel: isAr ? 'موافق' : 'OK',
+                                );
+                              }
                             } catch (e) {
                               if (context.mounted) {
                                 final errorMsg = e.toString().toLowerCase();
                                 final isForeignKey = errorMsg.contains('foreign') || errorMsg.contains('constraint') || errorMsg.contains('500');
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      isForeignKey 
-                                        ? (isAr ? 'عذراً، لا يمكن حذف العميل لوجود حجوزات أو مبالغ مالية مرتبطة به.' : 'Cannot delete customer because they have related bookings or transactions.') 
-                                        : (isAr ? 'حدث خطأ: $e' : 'Error: $e'),
-                                    ),
-                                    backgroundColor: Theme.of(context).colorScheme.error,
-                                  ),
+                                AppSnackBar.showError(
+                                  context,
+                                  isForeignKey 
+                                    ? (isAr ? 'عذراً، لا يمكن حذف العميل لوجود حجوزات أو مبالغ مالية مرتبطة به.' : 'Cannot delete customer because they have related bookings or transactions.') 
+                                    : (isAr ? 'حدث خطأ: $e' : 'Error: $e'),
                                 );
                               }
                             }

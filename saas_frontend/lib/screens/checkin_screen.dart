@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/checkin_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_strings.dart';
+import '../utils/app_snackbar.dart';
 
 class CheckInScreen extends ConsumerStatefulWidget {
   const CheckInScreen({super.key});
@@ -84,8 +86,8 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen>
     try {
       final authenticated = await _localAuth.authenticate(
         localizedReason: isAr
-            ? 'ضع إصبعك للتحقق من هويتك'
-            : 'Place your finger to verify your identity',
+            ? 'ضع إصبعك للتحقق من هويتك لتسجيل الحضور'
+            : 'Place your finger to verify identity for check-in',
         options: const AuthenticationOptions(
           biometricOnly: true,
           stickyAuth: true,
@@ -93,8 +95,21 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen>
       );
 
       if (authenticated && mounted) {
-        // البصمة تحقق من هوية الشخص → نحتاج رقم هاتفه لربطه بالعميل
-        _showPhoneInputDialog(isAr);
+        final prefs = await SharedPreferences.getInstance();
+        final linkedPhone = prefs.getString('linked_biometric_phone');
+
+        if (linkedPhone != null && linkedPhone.isNotEmpty) {
+          // البصمة موثقة ومربوطة برقم سابقاً → تسجيل حضور فوري!
+          ref.read(checkInProvider.notifier).searchByPhone(linkedPhone);
+          _showSnack(
+            isAr
+                ? 'تم التعرف على البصمة وتأكيد تسجيل الحضور!'
+                : 'Fingerprint verified & Check-In completed!',
+          );
+        } else {
+          // المرة الأولى: نطلب الرقم لربطه بالبصمة للمرات القادمة
+          _showPhoneInputDialog(isAr);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -114,7 +129,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen>
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 48),
+            const Icon(Icons.check_circle, color: Colors.green, size: 48),
             const SizedBox(height: 12),
             Text(AppStrings.t('checkinEnterPhone', isAr)),
             const SizedBox(height: 12),
@@ -134,9 +149,20 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen>
             child: Text(AppStrings.t('cancel', isAr)),
           ),
           FilledButton(
-            onPressed: () {
+            onPressed: () async {
+              final phone = controller.text.trim();
+              if (phone.isEmpty) return;
               Navigator.pop(ctx);
-              ref.read(checkInProvider.notifier).searchByPhone(controller.text);
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('linked_biometric_phone', phone);
+              ref.read(checkInProvider.notifier).searchByPhone(phone);
+              if (mounted) {
+                _showSnack(
+                  isAr
+                      ? 'تم ربط البصمة بالرقم وسيعمل التبصيم القادم آلياً!'
+                      : 'Fingerprint linked to phone for instant check-in!',
+                );
+              }
             },
             child: Text(AppStrings.t('checkinSearch', isAr)),
           ),
@@ -206,11 +232,11 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen>
   }
 
   void _showSnack(String msg, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: isError ? Colors.red : Colors.green,
-      behavior: SnackBarBehavior.floating,
-    ));
+    if (isError) {
+      AppSnackBar.showError(context, msg);
+    } else {
+      AppSnackBar.showSuccess(context, msg);
+    }
   }
 
   @override
@@ -456,44 +482,58 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen>
                       Text(isAr ? 'جاري التحقق...' : 'Verifying...'),
                     ],
                   )
-                : GestureDetector(
-                    onTap: _authenticateBiometric,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 14),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            theme.colorScheme.primary,
-                            theme.colorScheme.secondary,
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.4),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          )
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.fingerprint,
-                              color: Colors.white, size: 28),
-                          const SizedBox(width: 10),
-                          Text(
-                            AppStrings.t('checkinBiometric', isAr),
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold),
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: _authenticateBiometric,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 14),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                theme.colorScheme.primary,
+                                theme.colorScheme.secondary,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              )
+                            ],
                           ),
-                        ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.fingerprint,
+                                  color: Colors.white, size: 28),
+                              const SizedBox(width: 10),
+                              Text(
+                                AppStrings.t('checkinBiometric', isAr),
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                      TextButton.icon(
+                        onPressed: () => _showPhoneInputDialog(isAr),
+                        icon: const Icon(Icons.phonelink_setup_rounded, size: 16),
+                        label: Text(
+                          isAr ? 'ربط / تغيير الرقم المرتبط بالبصمة' : 'Link / Change Fingerprint Phone',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
                   )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,

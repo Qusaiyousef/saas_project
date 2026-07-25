@@ -11,6 +11,7 @@ import '../utils/validators.dart';
 import '../providers/customers_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_strings.dart';
+import '../utils/app_snackbar.dart';
 
 class SubscriptionsScreen extends ConsumerStatefulWidget {
   const SubscriptionsScreen({super.key});
@@ -309,46 +310,19 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                     ? null
                     : () async {
                         if (selectedCustomerId == null) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                AppStrings.t('pleaseSelectCustomer', isAr),
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('pleaseSelectCustomer', isAr));
                           return;
                         }
 
                         final paidText = amountPaidController.text.trim();
                         if (paidText.isEmpty) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                AppStrings.t('valAmountPaidRequired', isAr),
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valAmountPaidRequired', isAr));
                           return;
                         }
 
                         final amountPaid = double.tryParse(paidText);
                         if (amountPaid == null || amountPaid < 0) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                AppStrings.t('errorInvalidAmount', isAr),
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('errorInvalidAmount', isAr));
                           return;
                         }
 
@@ -359,16 +333,7 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                         final totalAmount = double.tryParse(priceStr) ?? 0.0;
 
                         if (amountPaid > totalAmount) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                AppStrings.t('valAmountPaidExceedsTotal', isAr),
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valAmountPaidExceedsTotal', isAr));
                           return;
                         }
 
@@ -448,16 +413,7 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                         } catch (e) {
                           setState(() => loading = false);
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  '${AppStrings.t('error', isAr)}: $e',
-                                ),
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.error,
-                              ),
-                            );
+                            AppSnackBar.showError(context, '${AppStrings.t('error', isAr)}: $e');
                           }
                         }
                       },
@@ -1242,34 +1198,18 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                                                             sub['id'],
                                                           );
                                                       if (context.mounted) {
-                                                        ScaffoldMessenger.of(
+                                                        AppSnackBar.showSuccessDialog(
                                                           context,
-                                                        ).showSnackBar(
-                                                          SnackBar(
-                                                            content: Text(
-                                                              isAr
-                                                                  ? 'تم إلغاء الاشتراك بنجاح'
-                                                                  : 'Subscription cancelled successfully',
-                                                            ),
-                                                          ),
+                                                          title: AppStrings.t('subCancelledTitle', isAr),
+                                                          message: AppStrings.t('subCancelledMsg', isAr),
+                                                          confirmLabel: AppStrings.t('ok', isAr),
                                                         );
                                                       }
                                                     } catch (e) {
                                                       if (context.mounted) {
-                                                        ScaffoldMessenger.of(
+                                                        AppSnackBar.showError(
                                                           context,
-                                                        ).showSnackBar(
-                                                          SnackBar(
-                                                            content: Text(
-                                                              'Error: $e',
-                                                            ),
-                                                            backgroundColor:
-                                                                Theme.of(
-                                                                      context,
-                                                                    )
-                                                                    .colorScheme
-                                                                    .error,
-                                                          ),
+                                                          'Error: $e',
                                                         );
                                                       }
                                                     }
@@ -1383,73 +1323,28 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                         final phone = phoneController.text.trim();
 
                         if (name.isEmpty) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                AppStrings.t('valNameRequired', isAr),
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valNameRequired', isAr));
                           return;
                         }
 
                         if (!FormValidators.isValidName(name)) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                AppStrings.t('valNameInvalid', isAr),
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valNameInvalid', isAr));
                           return;
                         }
 
                         if (phone.isEmpty) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                AppStrings.t('valPhoneRequired', isAr),
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valPhoneRequired', isAr));
                           return;
                         }
 
                         final yemenPhoneRegex = RegExp(r'^(77|78|73|71)\d{7}$');
                         if (!yemenPhoneRegex.hasMatch(phone)) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                AppStrings.t('valPhoneInvalidYemen', isAr),
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valPhoneInvalidYemen', isAr));
                           return;
                         }
 
                         if (selectedDob == null) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                AppStrings.t('valDobRequired', isAr),
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valDobRequired', isAr));
                           return;
                         }
 
@@ -1461,9 +1356,7 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                           if (ctx.mounted) Navigator.pop(ctx);
                         } catch (e) {
                           setState(() => isLoading = false);
-                          ScaffoldMessenger.of(
-                            ctx,
-                          ).showSnackBar(SnackBar(content: Text('$e')));
+                          AppSnackBar.showError(ctx, '$e');
                         }
                       },
                 child: isLoading
@@ -1892,14 +1785,17 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
         await ref
             .read(subscriptionProvider.notifier)
             .cancelSubscription(sub['id']);
+        if (context.mounted) {
+          AppSnackBar.showSuccessDialog(
+            context,
+            title: AppStrings.t('subCancelledTitle', isAr),
+            message: AppStrings.t('subCancelledMsg', isAr),
+            confirmLabel: AppStrings.t('ok', isAr),
+          );
+        }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: $e'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
+          AppSnackBar.showError(context, 'Error: $e');
         }
       }
     }

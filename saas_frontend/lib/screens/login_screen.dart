@@ -1,12 +1,15 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import '../widgets/app_drawer.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_strings.dart';
+import '../utils/app_snackbar.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +22,78 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController(text: "qusai");
   final _passwordController = TextEditingController(text: "Admin123!");
   bool _obscurePassword = true;
+
+  final LocalAuthentication _localAuth = LocalAuthentication();
+  bool _canBiometricLogin = false;
+  String? _savedUsername;
+  String? _savedPassword;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSavedBiometricAuth();
+  }
+
+  Future<void> _checkSavedBiometricAuth() async {
+    if (kIsWeb) return;
+    try {
+      final canCheck = await _localAuth.canCheckBiometrics;
+      final isDeviceSupported = await _localAuth.isDeviceSupported();
+      final prefs = await SharedPreferences.getInstance();
+      final savedUser = prefs.getString('saved_auth_username');
+      final savedPass = prefs.getString('saved_auth_password');
+
+      if (canCheck && isDeviceSupported && savedUser != null && savedPass != null) {
+        setState(() {
+          _canBiometricLogin = true;
+          _savedUsername = savedUser;
+          _savedPassword = savedPass;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loginWithBiometrics(bool isAr) async {
+    if (_savedUsername == null || _savedPassword == null) return;
+    try {
+      final authenticated = await _localAuth.authenticate(
+        localizedReason: isAr
+            ? 'استخدم البصمة لتسجيل الدخول السريع'
+            : 'Use fingerprint to log in quickly',
+        options: const AuthenticationOptions(
+          biometricOnly: true,
+          stickyAuth: true,
+        ),
+      );
+
+      if (authenticated && mounted) {
+        await ref.read(authProvider.notifier).login(_savedUsername!, _savedPassword!);
+        final currentAuth = ref.read(authProvider);
+        if (currentAuth.isAuthenticated && context.mounted) {
+          if (currentAuth.role == 'Employee') {
+            context.go('/calendar');
+          } else {
+            context.go('/dashboard');
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showError(
+          context,
+          isAr ? 'فشلت المصادقة بالبصمة' : 'Biometric authentication failed',
+        );
+      }
+    }
+  }
+
+  Future<void> _saveCredentials(String username, String password) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('saved_auth_username', username);
+      await prefs.setString('saved_auth_password', password);
+    } catch (_) {}
+  }
 
   void _showServerSetupDialog() {
     String s(String key) => AppStrings.t(key, ref.read(isArabicProvider));
@@ -55,20 +130,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   if (context.mounted) {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(s('serverUpdated')),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
+                    AppSnackBar.showSuccess(context, s('serverUpdated'));
                   }
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(s('invalidCode')),
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                    ),
-                  );
+                  AppSnackBar.showError(context, s('invalidCode'));
                 }
               },
               child: Text(s('save')),
@@ -83,18 +148,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isAr = ref.watch(isArabicProvider);
+    final isMobile = MediaQuery.of(context).size.width < 600;
     String s(String key) => AppStrings.t(key, isAr);
 
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.error != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(next.error!),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
+          AppSnackBar.showError(context, next.error!);
         });
       }
     });
@@ -104,9 +165,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         children: [
           Center(
             child: SingleChildScrollView(
+              padding: isMobile ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24) : EdgeInsets.zero,
               child: Container(
-                width: 420,
-                padding: const EdgeInsets.all(32),
+                width: isMobile ? double.infinity : 420,
+                padding: EdgeInsets.all(isMobile ? 24 : 32),
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(16),
@@ -259,6 +321,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               final currentAuth = ref.read(authProvider);
                               if (currentAuth.isAuthenticated &&
                                   context.mounted) {
+                                await _saveCredentials(
+                                  _emailController.text,
+                                  _passwordController.text,
+                                );
                                 if (currentAuth.role == 'Employee') {
                                   context.go('/calendar');
                                 } else {
@@ -273,6 +339,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ? const CircularProgressIndicator()
                           : Text(s('loginButton')),
                     ),
+                    if (_canBiometricLogin) ...[
+                      const SizedBox(height: 14),
+                      OutlinedButton.icon(
+                        onPressed: authState.isLoading ? null : () => _loginWithBiometrics(isAr),
+                        icon: const Icon(Icons.fingerprint, color: Colors.teal, size: 22),
+                        label: Text(
+                          isAr ? 'تسجيل الدخول السريع بالبصمة' : 'Biometric Quick Login',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

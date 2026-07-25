@@ -43,15 +43,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           final now = DateTime.now();
           final today = DateTime(now.year, now.month, now.day);
 
-          final List<Map<String, dynamic>> todayBookings = validBookings
-              .where((b) {
-                final dt = DateTime.parse(b['startTime']).toLocal();
-                return dt.year == today.year &&
-                    dt.month == today.month &&
-                    dt.day == today.day;
-              })
-              .cast<Map<String, dynamic>>()
-              .toList();
+          final List<Map<String, dynamic>> todayBookings = [];
+          for (final b in validBookings) {
+            if (b['startTime'] != null) {
+              final dt = DateTime.parse(b['startTime']).toLocal();
+              if (dt.year == today.year &&
+                  dt.month == today.month &&
+                  dt.day == today.day) {
+                todayBookings.add(Map<String, dynamic>.from(b as Map));
+              }
+            }
+          }
 
           final todayCount = todayBookings.length;
           final totalRev = validBookings.fold<double>(
@@ -125,7 +127,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${AppStrings.t('dashWelcome', isAr)}${authState.role ?? "Admin"}',
+                          '${AppStrings.t('dashWelcome', isAr)}${authState.role == 'Admin' ? AppStrings.t('roleAdmin', isAr) : AppStrings.t('roleEmployee', isAr)}',
                           style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,

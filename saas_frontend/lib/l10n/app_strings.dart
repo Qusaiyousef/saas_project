@@ -509,6 +509,133 @@ class AppStrings {
       'en': 'External Device Mode',
       'ar': 'وضع الجهاز الخارجي',
     },
+
+    // ── Dialogs & Toast Notifications ───────────────────────────────────────
+    'customerAddedTitle': {'en': 'Customer Added', 'ar': 'تمت إضافة العميل'},
+    'customerAddedMsg': {
+      'en': 'Customer record saved successfully.',
+      'ar': 'تم حفظ سجل العميل الجديد بنجاح في النظام.',
+    },
+    'paymentRecordedTitle': {'en': 'Payment Recorded', 'ar': 'تم تسديد الدفعة'},
+    'paymentRecordedMsg': {
+      'en': 'Payment recorded successfully.',
+      'ar': 'تم تسجيل مبلغ الدفعة بنجاح وتحديث رصيد العميل.',
+    },
+    'customerDeletedTitle': {'en': 'Customer Deleted', 'ar': 'تم حذف العميل'},
+    'customerDeletedMsg': {
+      'en': 'Customer and their records deleted successfully.',
+      'ar': 'تم حذف العميل وسجلاته بنجاح من النظام.',
+    },
+    'cannotDeleteTitle': {'en': 'Cannot Delete', 'ar': 'عذراً، لا يمكن الحذف'},
+    'cannotDeleteCustomerMsg': {
+      'en': 'Cannot delete customer because they have related bookings or transactions.',
+      'ar': 'عذراً، لا يمكن حذف العميل لوجود حجوزات أو مبالغ مالية مرتبطة به.',
+    },
+    'userCreatedTitle': {'en': 'User Created', 'ar': 'تم إنشاء المستخدم'},
+    'userCreatedMsg': {
+      'en': 'User account and permissions created successfully.',
+      'ar': 'تم إنشاء حساب المستخدم بنجاح وتعيين الصلاحيات.',
+    },
+    'userUpdatedTitle': {'en': 'User Updated', 'ar': 'تم تحديث المستخدم'},
+    'userUpdatedMsg': {
+      'en': 'User data and permissions updated successfully.',
+      'ar': 'تم حفظ وتحديث بيانات حساب المستخدم والصلاحيات بنجاح.',
+    },
+    'userDeletedTitle': {'en': 'User Deleted', 'ar': 'تم حذف المستخدم'},
+    'userDeletedMsg': {
+      'en': 'User account deleted successfully.',
+      'ar': 'تم حذف حساب المستخدم بنجاح من النظام.',
+    },
+    'subCancelledTitle': {'en': 'Subscription Cancelled', 'ar': 'تم إلغاء الاشتراك'},
+    'subCancelledMsg': {
+      'en': 'Subscription cancelled successfully.',
+      'ar': 'تم إلغاء اشتراك العضو بنجاح.',
+    },
+    'bookingCancelledTitle': {'en': 'Booking Cancelled', 'ar': 'تم إلغاء الحجز'},
+    'bookingCancelledMsg': {
+      'en': 'Booking cancelled successfully.',
+      'ar': 'تم إلغاء الحجز وتحديث حالة النظام بنجاح.',
+    },
+    'langChangedAr': {
+      'en': 'Language changed to Arabic',
+      'ar': 'تم تغيير اللغة إلى العربية',
+    },
+    'langChangedEn': {
+      'en': 'Language changed to English',
+      'ar': 'تم تغيير اللغة إلى الإنجليزية',
+    },
+    'darkModeEnabled': {
+      'en': 'Dark mode enabled',
+      'ar': 'تم تفعيل الوضع الداكن',
+    },
+    'lightModeEnabled': {
+      'en': 'Light mode enabled',
+      'ar': 'تم تفعيل الوضع الفاتح',
+    },
+    'autoNumberCustomers': {
+      'en': 'Auto-number Customers',
+      'ar': 'ترقيم العملاء تلقائياً (العميل : 1...)',
+    },
+    'pleaseEnterPrice': {
+      'en': 'Please enter price',
+      'ar': 'الرجاء إدخال السعر',
+    },
+    'invalidNumber': {
+      'en': 'Invalid number',
+      'ar': 'رقم غير صالح',
+    },
+    'pleaseEnterAmountPaid': {
+      'en': 'Please enter amount paid',
+      'ar': 'الرجاء إدخال المبلغ المدفوع',
+    },
+    'paymentMethod': {
+      'en': 'Payment Method',
+      'ar': 'طريقة الدفع',
+    },
+    'cash': {'en': 'Cash', 'ar': 'كاش'},
+    'transfer': {'en': 'Transfer', 'ar': 'حوالة'},
+    'fingerprintCode': {'en': 'Fingerprint Code', 'ar': 'كود البصمة'},
+    'verifying': {'en': 'Verifying...', 'ar': 'جاري التحقق...'},
+    'updateBtn': {'en': 'Update', 'ar': 'تحديث'},
+    'subscriberId': {'en': 'Subscriber ID', 'ar': 'رقم المشترك'},
+    'allTime': {'en': 'All Time', 'ar': 'كل الأوقات'},
+    'thisMonth': {'en': 'This Month', 'ar': 'هذا الشهر'},
+    'deductedAmount': {'en': 'Deducted Amount', 'ar': 'مبلغ مخصوم'},
+
+    'confirmDelete': {'en': 'Confirm Delete', 'ar': 'تأكيد الحذف'},
+    'confirmDeleteCustomer': {
+      'en': 'Are you sure you want to delete this customer? All their records will be affected.',
+      'ar': 'هل أنت متأكد من حذف هذا العميل؟ ستتأثر جميع سجلاته.',
+    },
+    'deleteCustomer': {'en': 'Delete Customer', 'ar': 'حذف العميل'},
+    'done': {'en': 'Done', 'ar': 'تم'},
+    'print': {'en': 'Print', 'ar': 'طباعة'},
+
+    'tenantChalet': {'en': 'Chalet', 'ar': 'شاليه'},
+    'tenantGym': {'en': 'Gym', 'ar': 'نادي رياضي'},
+    'tenantPool': {'en': 'Pool', 'ar': 'مسبح'},
+    'roleAdmin': {'en': 'Admin', 'ar': 'مدير النظام'},
+    'roleEmployee': {'en': 'Employee', 'ar': 'موظف'},
+
+    'finReconcileDialogTitle': {'en': 'Cash Box Reconciliation', 'ar': 'تسوية الخزينة والصندوق'},
+    'finReconcileSuccessTitle': {'en': 'Cash Reconciled Successfully', 'ar': 'تمت تسوية الصندوق بنجاح'},
+    'finReconcileSuccessMsg': {
+      'en': 'The current cash balance has been verified and reconciled in the system.',
+      'ar': 'تمت مطابقة وتسوية الرصيد النقدي الحالي في الخزينة بنجاح.',
+    },
+    'finReconcileNotesHint': {'en': 'Reconciliation notes (optional)...', 'ar': 'إدخال ملاحظات التسوية (اختياري)...'},
+    'finConfirmReconcile': {'en': 'Confirm & Reconcile Cash', 'ar': 'تأكيد تسوية الصندوق'},
+    'finTotalTransactionsRecorded': {'en': 'transactions in period', 'ar': 'عمليات مقبوضات في هذه الفترة'},
+    'finReconciledStatus': {'en': 'Cash Box Verified', 'ar': 'الصندوق مطابق وجاهز للتسوية'},
+
+    'finReconcileLedgerTitle': {'en': 'Reconciliation History Log', 'ar': 'سجل حافظة التسويات المالية'},
+    'finReconcileHistoryBtn': {'en': 'History Log', 'ar': 'سجل التسويات'},
+    'finReconciledPeriod': {'en': 'Applied Filter Period', 'ar': 'فترة الفلتر المحددة'},
+    'finReconciledBy': {'en': 'By User', 'ar': 'بواسطة'},
+    'finNoReconciliationsYet': {'en': 'No past reconciliations recorded yet.', 'ar': 'لا توجد تسويات سابقة مسجلة بعد.'},
+    'finReconciledAmount': {'en': 'Reconciled Amount', 'ar': 'المبلغ المسوى'},
+    'allCustomers': {'en': 'All Customers', 'ar': 'جميع العملاء'},
+    'todaySchedule': {'en': "Today's Schedule", 'ar': 'جدول حجوزات اليوم'},
   };
 
   static String t(String key, bool isAr) {

@@ -9,6 +9,7 @@ import '../l10n/app_strings.dart';
 import '../models/tenant_type.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/print_service.dart';
+import '../utils/app_snackbar.dart';
 
 class PosScreen extends ConsumerStatefulWidget {
   const PosScreen({super.key});
@@ -454,7 +455,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Today's Schedule",
+                                AppStrings.t('todaySchedule', isAr),
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -1086,16 +1087,17 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                     if (confirm == true) {
                                       try {
                                         await ref.read(bookingsProvider.notifier).cancelBooking(b['id'], feePercentage);
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text(isAr ? 'تم إلغاء الحجز بنجاح' : 'Booking cancelled successfully')),
-                                          );
-                                        }
+                                         if (context.mounted) {
+                                           AppSnackBar.showSuccessDialog(
+                                             context,
+                                             title: AppStrings.t('bookingCancelledTitle', isAr),
+                                             message: AppStrings.t('bookingCancelledMsg', isAr),
+                                             confirmLabel: AppStrings.t('ok', isAr),
+                                           );
+                                         }
                                       } catch (e) {
                                         if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Error: $e'), backgroundColor: Theme.of(context).colorScheme.error),
-                                          );
+                                          AppSnackBar.showError(context, 'Error: $e');
                                         }
                                       }
                                     }
@@ -1233,53 +1235,28 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         final phone = phoneController.text.trim();
 
                         if (name.isEmpty) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(AppStrings.t('valNameRequired', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valNameRequired', isAr));
                           return;
                         }
 
                         if (!FormValidators.isValidName(name)) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(AppStrings.t('valNameInvalid', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valNameInvalid', isAr));
                           return;
                         }
 
                         if (phone.isEmpty) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(AppStrings.t('valPhoneRequired', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valPhoneRequired', isAr));
                           return;
                         }
 
                         final yemenPhoneRegex = RegExp(r'^(77|78|73|71)\d{7}$');
                         if (!yemenPhoneRegex.hasMatch(phone)) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(AppStrings.t('valPhoneInvalidYemen', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valPhoneInvalidYemen', isAr));
                           return;
                         }
 
                         if (selectedDob == null) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text(AppStrings.t('valDobRequired', isAr)),
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                            ),
-                          );
+                          AppSnackBar.showError(ctx, AppStrings.t('valDobRequired', isAr));
                           return;
                         }
 
@@ -1296,9 +1273,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                           if (ctx.mounted) Navigator.pop(ctx);
                         } catch (e) {
                           setState(() => isLoading = false);
-                          ScaffoldMessenger.of(
-                            ctx,
-                          ).showSnackBar(SnackBar(content: Text('$e')));
+                          AppSnackBar.showError(ctx, '$e');
                         }
                       },
                 child: isLoading
