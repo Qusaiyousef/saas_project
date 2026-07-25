@@ -25,7 +25,7 @@ List<NavItem> buildNavItems(
   bool isAr,
 ) {
   final items = <NavItem>[];
-  bool hasPerm(String key) => permissions?[key] ?? (role == 'Admin');
+  bool hasPerm(String key) => (role == 'Admin') || (permissions?[key] ?? false);
 
   if (hasPerm('canAccessDashboard')) {
     items.add(

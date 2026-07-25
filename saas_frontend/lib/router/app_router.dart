@@ -45,7 +45,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (!authState.isAuthenticated && !isLoggingIn) return '/login';
 
       if (authState.isAuthenticated && isLoggingIn) {
-        bool hasPerm(String key) => authState.permissions?[key] ?? (authState.role == 'Admin');
+        bool hasPerm(String key) => (authState.role == 'Admin') || (authState.permissions?[key] ?? false);
         if (hasPerm('canAccessDashboard')) return '/dashboard';
         if (hasPerm('canAccessCalendar')) return '/calendar';
         if (hasPerm('canAccessPOS')) return '/pos';
@@ -55,7 +55,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       if (authState.isAuthenticated) {
-        bool hasPerm(String key) => authState.permissions?[key] ?? (authState.role == 'Admin');
+        bool hasPerm(String key) => (authState.role == 'Admin') || (authState.permissions?[key] ?? false);
         final path = state.uri.path;
 
         if (path == '/dashboard' && !hasPerm('canAccessDashboard')) return '/calendar';
