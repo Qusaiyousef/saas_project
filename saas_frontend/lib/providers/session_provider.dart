@@ -6,7 +6,9 @@ import '../l10n/app_strings.dart';
 import '../utils/app_snackbar.dart';
 
 const String _keyLastActive = 'session_last_active_ms';
-const int _timeoutMs = 30 * 60 * 1000; // 30 minutes
+// const int _timeoutMs = 30 * 60 * 1000; // 30 minutes
+const int _timeoutMs = 2 * 60 * 1000;
+bool _obscurePassword = true;
 
 class SessionNotifier extends Notifier<bool> {
   @override
@@ -24,7 +26,8 @@ class SessionNotifier extends Notifier<bool> {
 
   Future<bool> checkAndVerifySession(BuildContext context, bool isAr) async {
     final prefs = await SharedPreferences.getInstance();
-    final lastActive = prefs.getInt(_keyLastActive) ?? DateTime.now().millisecondsSinceEpoch;
+    final lastActive =
+        prefs.getInt(_keyLastActive) ?? DateTime.now().millisecondsSinceEpoch;
     final now = DateTime.now().millisecondsSinceEpoch;
 
     if (now - lastActive < _timeoutMs) {
@@ -42,7 +45,10 @@ class SessionNotifier extends Notifier<bool> {
     return false;
   }
 
-  Future<bool> _showBiometricRenewalDialog(BuildContext context, bool isAr) async {
+  Future<bool> _showBiometricRenewalDialog(
+    BuildContext context,
+    bool isAr,
+  ) async {
     bool authenticated = false;
     final localAuth = LocalAuthentication();
     final prefs = await SharedPreferences.getInstance();
@@ -107,10 +113,23 @@ class SessionNotifier extends Notifier<bool> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: passwordController,
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     hintText: isAr ? 'كلمة المرور' : 'Password',
                     prefixIcon: const Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setDialogState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
+
                     errorText: errorMessage,
                   ),
                 ),
@@ -126,7 +145,9 @@ class SessionNotifier extends Notifier<bool> {
                   final inputPass = passwordController.text.trim();
                   if (inputPass.isEmpty) {
                     setDialogState(() {
-                      errorMessage = isAr ? 'يرجى إدخال كلمة المرور' : 'Please enter password';
+                      errorMessage = isAr
+                          ? 'يرجى إدخال كلمة المرور'
+                          : 'Please enter password';
                     });
                     return;
                   }
