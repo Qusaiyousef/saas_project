@@ -1330,35 +1330,41 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(AppStrings.t('cancel', isAr)),
-          ),
-          ElevatedButton.icon(
-            onPressed: () async {
-              final note = notesController.text.trim();
-              await _addReconciliationRecord(
-                amount: totalCash,
-                period: filterPeriod,
-                note: note,
-              );
-              if (ctx.mounted) Navigator.pop(ctx);
-              if (context.mounted) {
-                AppSnackBar.showSuccessDialog(
-                  context,
-                  title: AppStrings.t('finReconcileSuccessTitle', isAr),
-                  message: AppStrings.t('finReconcileSuccessMsg', isAr),
-                  confirmLabel: AppStrings.t('ok', isAr),
-                );
-              }
-            },
-            icon: const Icon(Icons.check),
-            label: Text(AppStrings.t('finConfirmReconcile', isAr)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(AppStrings.t('cancel', isAr)),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final note = notesController.text.trim();
+                  await _addReconciliationRecord(
+                    amount: totalCash,
+                    period: filterPeriod,
+                    note: note,
+                  );
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (context.mounted) {
+                    AppSnackBar.showSuccessDialog(
+                      context,
+                      title: AppStrings.t('finReconcileSuccessTitle', isAr),
+                      message: AppStrings.t('finReconcileSuccessMsg', isAr),
+                      confirmLabel: AppStrings.t('ok', isAr),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.check, size: 18),
+                label: Text(AppStrings.t('finConfirmReconcile', isAr)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
           ),
         ],
       ),

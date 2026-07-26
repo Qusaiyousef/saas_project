@@ -1,17 +1,37 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/locale_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
 import '../l10n/app_strings.dart';
 import '../utils/app_snackbar.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  bool _biometricEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBiometricSetting();
+  }
+
+  Future<void> _loadBiometricSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _biometricEnabled = prefs.getBool('biometric_login_enabled') ?? false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isAr = ref.watch(isArabicProvider);
     final themeMode = ref.watch(themeProvider);
     final colors = Theme.of(context).colorScheme;
@@ -108,6 +128,67 @@ class SettingsScreen extends ConsumerWidget {
                                 selected.first == ThemeMode.dark
                                     ? AppStrings.t('darkModeEnabled', isAr)
                                     : AppStrings.t('lightModeEnabled', isAr),
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.fingerprint, color: colors.primary),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    isAr ? 'بصمة الدخول السريع' : 'Biometric Quick Login',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isAr
+                                    ? 'تفعيل بصمة الإبهام/الوجه لتسجيل الدخول الفوري'
+                                    : 'Enable fingerprint/face login for instant access',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colors.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: _biometricEnabled,
+                          onChanged: (val) async {
+                            setState(() => _biometricEnabled = val);
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setBool('biometric_login_enabled', val);
+                            if (context.mounted) {
+                              AppSnackBar.showInfo(
+                                context,
+                                val
+                                    ? (isAr ? 'تم تفعيل الدخول بالبصمة' : 'Biometric Login Enabled')
+                                    : (isAr ? 'تم إيقاف الدخول بالبصمة' : 'Biometric Login Disabled'),
                               );
                             }
                           },

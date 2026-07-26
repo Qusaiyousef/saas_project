@@ -624,7 +624,7 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
 
                         // Table
                         SizedBox(
-                          height: 600,
+                          height: MediaQuery.of(context).size.width <= 800 ? null : 600,
                           child: subData.when(
                             loading: () => const Center(
                               child: CircularProgressIndicator(),
@@ -1381,6 +1381,8 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
   ) {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: subs.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {

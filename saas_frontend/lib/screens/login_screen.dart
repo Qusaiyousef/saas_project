@@ -43,7 +43,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final savedUser = prefs.getString('saved_auth_username');
       final savedPass = prefs.getString('saved_auth_password');
 
-      if (canCheck && isDeviceSupported && savedUser != null && savedPass != null) {
+      if (canCheck && isDeviceSupported) {
         setState(() {
           _canBiometricLogin = true;
           _savedUsername = savedUser;
@@ -54,7 +54,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _loginWithBiometrics(bool isAr) async {
-    if (_savedUsername == null || _savedPassword == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final isEnabled = prefs.getBool('biometric_login_enabled') ?? false;
+
+    if (!isEnabled) {
+      if (mounted) {
+        AppSnackBar.showInfo(
+          context,
+          isAr
+              ? 'يرجى تفعيل خيار البصمة من صفحة الإعدادات أولاً بعد تسجيل الدخول.'
+              : 'Please enable Biometric Login in Settings first after logging in.',
+        );
+      }
+      return;
+    }
+
+    if (_savedUsername == null || _savedPassword == null) {
+      if (mounted) {
+        AppSnackBar.showInfo(
+          context,
+          isAr
+              ? 'يرجى تسجيل الدخول يدويًا مرة واحدة لحفظ البصمة.'
+              : 'Please log in manually once to save biometric credentials.',
+        );
+      }
+      return;
+    }
+
     try {
       final authenticated = await _localAuth.authenticate(
         localizedReason: isAr

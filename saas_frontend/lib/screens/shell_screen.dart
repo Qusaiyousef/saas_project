@@ -859,21 +859,25 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     );
     if (selectedIndex == -1) selectedIndex = 0;
 
-    return NavigationBar(
-      selectedIndex: selectedIndex,
-      onDestinationSelected: (index) {
-        if (context.canPop()) {
-          context.pop();
-        }
-        context.go(items[index].path);
-      },
-      destinations: items.map((item) {
-        return NavigationDestination(
-          icon: Icon(item.icon),
-          selectedIcon: Icon(item.selectedIcon),
-          label: item.label,
-        );
-      }).toList(),
+    return SizedBox(
+      height: 64,
+      child: NavigationBar(
+        height: 64,
+        selectedIndex: selectedIndex,
+        onDestinationSelected: (index) {
+          if (context.canPop()) {
+            context.pop();
+          }
+          context.go(items[index].path);
+        },
+        destinations: items.map((item) {
+          return NavigationDestination(
+            icon: Icon(item.icon),
+            selectedIcon: Icon(item.selectedIcon),
+            label: item.label,
+          );
+        }).toList(),
+      ),
     );
   }
 }
