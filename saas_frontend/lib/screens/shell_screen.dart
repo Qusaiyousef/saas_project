@@ -163,7 +163,11 @@ class _ShellScreenState extends ConsumerState<ShellScreen> with WidgetsBindingOb
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       final isAr = ref.read(isArabicProvider);
-      ref.read(sessionProvider.notifier).checkAndVerifySession(context, isAr);
+      ref.read(sessionProvider.notifier).checkAndVerifySession(context, isAr).then((renewed) {
+        if (!renewed && mounted) {
+          context.go('/login');
+        }
+      });
     }
   }
 

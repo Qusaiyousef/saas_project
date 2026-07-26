@@ -77,55 +77,88 @@ class SessionNotifier extends Notifier<bool> {
     if (!context.mounted) return false;
 
     final passwordController = TextEditingController();
+    String? errorMessage;
+
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.security, color: Colors.orange),
-            const SizedBox(width: 8),
-            Text(isAr ? 'تجديد جلسة العمل' : 'Renew Work Session'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              isAr
-                  ? 'انتهت فترة الجلسة (30 دقيقة من عدم النشاط). يرجى البصمة أو تأكيد كلمة المرور لتجديد الجلسة'
-                  : 'Session period expired (30m inactivity). Please verify fingerprint or password to renew.',
-              style: const TextStyle(fontSize: 13),
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) {
+          return AlertDialog(
+            title: Row(
+              children: [
+                const Icon(Icons.security, color: Colors.orange),
+                const SizedBox(width: 8),
+                Text(isAr ? 'تجديد جلسة العمل' : 'Renew Work Session'),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                hintText: isAr ? 'كلمة المرور' : 'Password',
-                prefixIcon: const Icon(Icons.lock),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isAr
+                      ? 'انتهت فترة الجلسة (30 دقيقة من عدم النشاط). يرجى تأكيد كلمة المرور لتجديد الجلسة:'
+                      : 'Session period expired (30m inactivity). Please enter your password to renew:',
+                  style: const TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: isAr ? 'كلمة المرور' : 'Password',
+                    prefixIcon: const Icon(Icons.lock),
+                    errorText: errorMessage,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx, false),
+                child: Text(AppStrings.t('cancel', isAr)),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(AppStrings.t('cancel', isAr)),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (passwordController.text.trim().isNotEmpty) {
-                Navigator.pop(ctx, true);
-              }
-            },
-            child: Text(isAr ? 'تجديد الجلسة' : 'Renew Session'),
-          ),
-        ],
+              FilledButton(
+                onPressed: () {
+                  final inputPass = passwordController.text.trim();
+                  if (inputPass.isEmpty) {
+                    setDialogState(() {
+                      errorMessage = isAr ? 'يرجى إدخال كلمة المرور' : 'Please enter password';
+                    });
+                    return;
+                  }
+
+                  // التحقق من صحة كلمة المرور المقارنة بالحافظة المحفوظة
+                  if (savedPass != null && inputPass == savedPass) {
+                    Navigator.pop(dialogCtx, true);
+                  } else {
+                    setDialogState(() {
+                      errorMessage = isAr
+                          ? 'كلمة المرور غير صحيحة، يرجى التثبت والمحاولة مجدداً'
+                          : 'Incorrect password, please try again.';
+                    });
+                  }
+                },
+                child: Text(isAr ? 'تجديد الجلسة' : 'Renew Session'),
+              ),
+            ],
+          );
+        },
       ),
     );
 
-    return result ?? false;
+    if (result == true) {
+      if (context.mounted) {
+        AppSnackBar.showSuccess(
+          context,
+          isAr ? 'تم تجديد الجلسة بنجاح!' : 'Session renewed successfully!',
+        );
+      }
+      return true;
+    }
+
+    return false;
   }
 }
 
