@@ -213,6 +213,9 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
           drawer: isMobile
               ? _buildMobileDrawer(navItems, location, context, isAr)
               : null,
+          bottomNavigationBar: isMobile && bottomNavItems.isNotEmpty
+              ? _buildBottomBar(bottomNavItems, location, context)
+              : null,
           body: isMobile
               ? Column(
                   children: [
@@ -227,7 +230,6 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
                       ),
                     ),
                     Expanded(child: widget.child),
-                    _buildBottomBar(bottomNavItems, location, context),
                   ],
                 )
               : Row(
@@ -859,25 +861,22 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
     );
     if (selectedIndex == -1) selectedIndex = 0;
 
-    return SizedBox(
-      height: 64,
-      child: NavigationBar(
-        height: 64,
-        selectedIndex: selectedIndex,
-        onDestinationSelected: (index) {
-          if (context.canPop()) {
-            context.pop();
-          }
-          context.go(items[index].path);
-        },
-        destinations: items.map((item) {
-          return NavigationDestination(
-            icon: Icon(item.icon),
-            selectedIcon: Icon(item.selectedIcon),
-            label: item.label,
-          );
-        }).toList(),
-      ),
+    return NavigationBar(
+      height: 65,
+      selectedIndex: selectedIndex,
+      onDestinationSelected: (index) {
+        if (context.canPop()) {
+          context.pop();
+        }
+        context.go(items[index].path);
+      },
+      destinations: items.map((item) {
+        return NavigationDestination(
+          icon: Icon(item.icon),
+          selectedIcon: Icon(item.selectedIcon),
+          label: item.label,
+        );
+      }).toList(),
     );
   }
 }
