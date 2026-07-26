@@ -45,6 +45,8 @@ class SessionNotifier extends Notifier<bool> {
   Future<bool> _showBiometricRenewalDialog(BuildContext context, bool isAr) async {
     bool authenticated = false;
     final localAuth = LocalAuthentication();
+    final prefs = await SharedPreferences.getInstance();
+    final savedPass = prefs.getString('saved_auth_password');
 
     try {
       final canCheck = await localAuth.canCheckBiometrics;
