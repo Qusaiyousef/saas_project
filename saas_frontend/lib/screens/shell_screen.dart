@@ -9,6 +9,7 @@ import '../providers/locale_provider.dart';
 import '../l10n/app_strings.dart';
 import '../providers/pos_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../providers/session_provider.dart';
 
 class NavItem {
   final String path;
@@ -143,8 +144,28 @@ class ShellScreen extends ConsumerStatefulWidget {
   ConsumerState<ShellScreen> createState() => _ShellScreenState();
 }
 
-class _ShellScreenState extends ConsumerState<ShellScreen> {
+class _ShellScreenState extends ConsumerState<ShellScreen> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final isAr = ref.read(isArabicProvider);
+      ref.read(sessionProvider.notifier).checkAndVerifySession(context, isAr);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

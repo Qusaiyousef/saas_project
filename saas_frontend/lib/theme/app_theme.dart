@@ -134,6 +134,7 @@ class AppTheme {
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
         ),
       ),
 
@@ -294,6 +295,7 @@ class AppTheme {
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
         ),
       ),
 
