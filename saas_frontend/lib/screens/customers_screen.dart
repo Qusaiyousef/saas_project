@@ -292,6 +292,20 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
     );
   }
 
+  String _translatePaymentNote(String? note, bool isAr) {
+    if (note == null || note.trim().isEmpty) return '';
+    if (!isAr) return note;
+
+    String n = note.trim();
+    n = n.replaceAll('Debt payment', 'سداد دَين');
+    n = n.replaceAll('Initial payment upon subscription', 'دفعة أولية عند الاشتراك');
+    n = n.replaceAll('Initial payment upon booking', 'دفعة أولية عند الحجز');
+    n = n.replaceAll('Subscription payment', 'دفعة اشتراك');
+    n = n.replaceAll('Booking payment', 'دفعة حجز');
+    n = n.replaceAll('Payment', 'دفعة مالية');
+    return n;
+  }
+
   void _showPaymentHistory(
     BuildContext context,
     WidgetRef ref,
@@ -331,6 +345,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                 itemBuilder: (context, index) {
                   final p = payments[index];
                   final date = DateTime.parse(p['paymentDate']).toLocal();
+                  final noteText = _translatePaymentNote(p['notes']?.toString(), isAr);
                   return ListTile(
                     leading: Icon(
                       Icons.payment,
@@ -338,7 +353,7 @@ class _CustomersScreenState extends ConsumerState<CustomersScreen> {
                     ),
                     title: Text('\$${p['amount']}'),
                     subtitle: Text(
-                      '${date.toString().split('.')[0]}\n${p['notes'] ?? ''}',
+                      '${date.toString().split('.')[0]}\n$noteText',
                     ),
                   );
                 },
