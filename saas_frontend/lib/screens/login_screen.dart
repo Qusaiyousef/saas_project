@@ -31,6 +31,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    _passwordController.addListener(() {
+      if (mounted) setState(() {});
+    });
     _checkSavedBiometricAuth();
   }
 
@@ -42,6 +45,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final prefs = await SharedPreferences.getInstance();
       final savedUser = prefs.getString('saved_auth_username');
       final savedPass = prefs.getString('saved_auth_password');
+      final isEnabled = prefs.getBool('biometric_login_enabled') ?? false;
 
       if (canCheck && isDeviceSupported) {
         setState(() {
@@ -49,6 +53,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _savedUsername = savedUser;
           _savedPassword = savedPass;
         });
+
+        // فتح نافذة البصمة تلقائياً فقط إذا كانت مفعّلة في الإعدادات وهنالك بيانات سابقة
+        if (isEnabled && savedUser != null && savedPass != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              final isAr = ref.read(isArabicProvider);
+              _loginWithBiometrics(isAr);
+            }
+          });
+        }
       }
     } catch (_) {}
   }
@@ -316,18 +330,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       decoration: InputDecoration(
                         labelText: s('loginPassword'),
                         prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
+                        suffixIcon: _passwordController.text.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                              )
+                            : IconButton(
+                                icon: const Icon(
+                                  Icons.fingerprint,
+                                  color: Colors.teal,
+                                ),
+                                tooltip: isAr ? 'البصمة' : 'Biometric',
+                                onPressed: () => _loginWithBiometrics(isAr),
+                              ),
                         border: const OutlineInputBorder(),
                       ),
                       obscureText: _obscurePassword,
@@ -365,22 +388,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ? const CircularProgressIndicator()
                           : Text(s('loginButton')),
                     ),
-                    if (_canBiometricLogin) ...[
-                      const SizedBox(height: 14),
-                      OutlinedButton.icon(
-                        onPressed: authState.isLoading ? null : () => _loginWithBiometrics(isAr),
-                        icon: const Icon(Icons.fingerprint, color: Colors.teal, size: 22),
-                        label: Text(
-                          isAr ? 'تسجيل الدخول السريع بالبصمة' : 'Biometric Quick Login',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
