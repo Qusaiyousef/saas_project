@@ -201,27 +201,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     return Scaffold(
-      body: Stack(
-        children: [
-          Center(
-            child: SingleChildScrollView(
-              padding: isMobile ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24) : EdgeInsets.zero,
-              child: Container(
-                width: isMobile ? double.infinity : 420,
-                padding: EdgeInsets.all(isMobile ? 24 : 32),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(
-                        context,
-                      ).shadowColor.withValues(alpha: 0.07),
-                      blurRadius: 20,
-                      spreadRadius: 2,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: isMobile
+                ? const EdgeInsets.symmetric(horizontal: 24, vertical: 24)
+                : EdgeInsets.zero,
+            child: Container(
+              width: isMobile ? double.infinity : 420,
+              padding: EdgeInsets.all(isMobile ? 0 : 32),
+              decoration: isMobile
+                  ? null
+                  : BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(
+                            context,
+                          ).shadowColor.withValues(alpha: 0.07),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -393,8 +396,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
-        ],
-      ),
-    );
+        ),
+      );
   }
 }
